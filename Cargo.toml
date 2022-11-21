@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 bevy = "0.8.1"
 rand = "0.8.5"
+ndarray = "0.15.6"
 
 [profile.dev.package."*"]
 opt-level = 3
