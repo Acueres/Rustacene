@@ -68,9 +68,6 @@ impl Dir {
 }
 
 #[derive(Component, Clone)]
-struct Particle;
-
-#[derive(Component, Clone)]
 struct Cell {
     pub genome: Vec<f32>,
 }
@@ -89,7 +86,7 @@ struct Grid {
 #[derive(Component, Clone)]
 struct Parameters {
     pub grid_size: usize,
-    pub n_particles: usize,
+    pub n_entities: usize,
     pub genome_len: usize,
 }
 
@@ -136,38 +133,37 @@ fn setup(
 
         let params = Parameters {
             grid_size: 300,
-            n_particles: 100,
-            genome_len: 10,
+            n_entities: 100,
+            genome_len: 2 + 9,
         };
 
         commands.insert_resource(params.clone());
 
-        let particle_width = window.width() / params.grid_size as f32;
-        let particle_height = window.height() / params.grid_size as f32;
-        let particle_size = 1.5 * particle_height;
+        let cell_width = window.width() / params.grid_size as f32;
+        let cell_height = window.height() / params.grid_size as f32;
+        let cell_size = 1.5 * cell_height;
 
         let (cells, coords, grid) =
-            generate_entities(params.n_particles, params.grid_size, params.genome_len);
+            generate_entities(params.n_entities, params.grid_size, params.genome_len);
         for (cell, coord) in cells.iter().zip(coords.iter()) {
             commands
                 .spawn()
-                .insert(Particle)
                 .insert(cell.to_owned())
                 .insert(coord.to_owned())
                 .insert_bundle(MaterialMesh2dBundle {
                     mesh: meshes
                         .add(
                             shape::Quad::new(Vec2 {
-                                x: particle_size,
-                                y: particle_size,
+                                x: cell_size,
+                                y: cell_size,
                             })
                             .into(),
                         )
                         .into(),
                     material: materials.add(ColorMaterial::from(Color::WHITE)),
                     transform: Transform::from_translation(Vec3::new(
-                        (coord.x as f32) * particle_width,
-                        (coord.y as f32) * particle_height,
+                        (coord.x as f32) * cell_width,
+                        (coord.y as f32) * cell_height,
                         0.,
                     )),
                     ..default()
@@ -185,26 +181,24 @@ fn sim_step(
     params: Res<Parameters>,
     mut timer: ResMut<SimTimer>,
     mut grid: ResMut<Grid>,
-    mut particles: Query<(&mut Particle, &Cell, &mut Coord<isize>, &mut Transform)>,
+    mut entities_query: Query<(&Cell, &mut Coord<isize>, &mut Transform)>,
 ) {
     if !sim_state.paused && !sim_state.reset && timer.0.tick(time.delta()).just_finished() {
         for window in windows.iter() {
             let mut rng = rand::thread_rng();
 
-            let particle_width = window.width() / params.grid_size as f32;
-            let particle_height = window.height() / params.grid_size as f32;
+            let cell_width = window.width() / params.grid_size as f32;
+            let cell_height = window.height() / params.grid_size as f32;
 
-            for (_, cell, mut coord, mut transform) in particles.iter_mut() {
+            for (cell, mut coord, mut transform) in entities_query.iter_mut() {
                 let x_coord = coord.x as f32 / params.grid_size as f32;
                 let y_coord = coord.y as f32 / params.grid_size as f32;
-                let probas: Vec<f32> = cell.genome[0..1]
-                    .iter()
-                    .map(|w| {
-                        (w * x_coord + (1. - x_coord) * w + w * y_coord + (1. - y_coord) * w).tanh()
-                    })
-                    .collect();
+                let probas: Vec<f32> = vec![
+                    (cell.genome[0] * (x_coord + y_coord)).tanh(),
+                    (cell.genome[1] * (2. - x_coord - y_coord)).tanh(),
+                ];
 
-                let fire_values: Vec<bool> = cell.genome[1..]
+                let fire_values: Vec<bool> = cell.genome[2..]
                     .iter()
                     .map(|w| (probas.iter().sum::<f32>() * w).tanh())
                     .collect::<Vec<f32>>()
@@ -253,8 +247,8 @@ fn sim_step(
                     continue;
                 }
 
-                transform.translation.x = next_coord.x as f32 * particle_width;
-                transform.translation.y = next_coord.y as f32 * particle_height;
+                transform.translation.x = next_coord.x as f32 * cell_width;
+                transform.translation.y = next_coord.y as f32 * cell_height;
 
                 grid.data[[coord.x as usize, coord.y as usize]] = false;
                 grid.data[[next_coord.x as usize, next_coord.y as usize]] = true;
@@ -281,42 +275,40 @@ fn reset_sim(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-    particles: Query<(Entity, &Particle)>,
+    entities_query: Query<(Entity, &Cell)>,
 ) {
     if sim_state.reset {
         for window in windows.iter() {
-            for e in particles.iter() {
+            for e in entities_query.iter() {
                 commands.entity(e.0).despawn_recursive();
             }
             commands.remove_resource::<Grid>();
 
-            let particle_width = window.width() / params.grid_size as f32;
-            let particle_height = window.height() / params.grid_size as f32;
-
-            let particle_size = 1.5 * particle_height;
+            let cell_width = window.width() / params.grid_size as f32;
+            let cell_height = window.height() / params.grid_size as f32;
+            let cell_size = 1.5 * cell_height;
 
             let (cells, coords, grid) =
-                generate_entities(params.n_particles, params.grid_size, params.genome_len);
+                generate_entities(params.n_entities, params.grid_size, params.genome_len);
             for (cell, coord) in cells.iter().zip(coords.iter()) {
                 commands
                     .spawn()
-                    .insert(Particle)
                     .insert(cell.to_owned())
                     .insert(coord.to_owned())
                     .insert_bundle(MaterialMesh2dBundle {
                         mesh: meshes
                             .add(
                                 shape::Quad::new(Vec2 {
-                                    x: particle_size,
-                                    y: particle_size,
+                                    x: cell_size,
+                                    y: cell_size,
                                 })
                                 .into(),
                             )
                             .into(),
                         material: materials.add(ColorMaterial::from(Color::WHITE)),
                         transform: Transform::from_translation(Vec3::new(
-                            (coord.x as f32) * particle_width,
-                            (coord.y as f32) * particle_height,
+                            (coord.x as f32) * cell_width,
+                            (coord.y as f32) * cell_height,
                             0.,
                         )),
                         ..default()
@@ -355,15 +347,15 @@ fn handle_input(
 }
 
 fn generate_entities(
-    n_particles: usize,
+    n_entities: usize,
     grid_size: usize,
     genome_len: usize,
 ) -> (Vec<Cell>, Vec<Coord<isize>>, Grid) {
     let mut cells = Vec::<Cell>::new();
-    cells.reserve_exact(n_particles);
+    cells.reserve_exact(n_entities);
 
     let mut coords = Vec::<Coord<isize>>::new();
-    coords.reserve_exact(n_particles);
+    coords.reserve_exact(n_entities);
 
     let v = vec![false; grid_size * grid_size];
     let mut grid = Grid {
@@ -373,7 +365,7 @@ fn generate_entities(
     let mut rng = rand::thread_rng();
 
     let mut n = 0;
-    while n < n_particles {
+    while n < n_entities {
         let x = rng.gen_range(0..grid_size);
         let y = rng.gen_range(0..grid_size);
 
