@@ -1,117 +1,61 @@
+use crate::cell::Cell;
+use crate::coord::Coord;
+use crate::dir::Dir;
+use crate::grid::Grid;
 use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::utils::Duration;
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
-use ndarray::Array2;
-use rand::{
-    distributions::{Distribution, Standard},
-    Rng,
-};
+use bevy_egui::{egui, EguiContext};
+use rand::Rng;
 
-#[derive(Copy, Clone)]
-enum Dir {
-    NULL,
-    N,
-    S,
-    E,
-    W,
-    NE,
-    NW,
-    SE,
-    SW,
-}
-
-impl Distribution<Dir> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Dir {
-        match rng.gen_range(0..9) {
-            0 => Dir::NULL,
-            1 => Dir::N,
-            2 => Dir::S,
-            3 => Dir::E,
-            4 => Dir::W,
-            5 => Dir::NE,
-            6 => Dir::NW,
-            7 => Dir::SE,
-            _ => Dir::SW,
-        }
-    }
-}
-
-impl Dir {
-    pub fn value(self) -> Coord<i8> {
-        match self {
-            Self::NULL => Coord { x: 0, y: 0 },
-            Self::N => Coord { x: 0, y: 1 },
-            Self::S => Coord { x: 0, y: -1 },
-            Self::E => Coord { x: 1, y: 0 },
-            Self::W => Coord { x: -1, y: 0 },
-            Self::NE => Coord { x: 1, y: 1 },
-            Self::NW => Coord { x: -1, y: 1 },
-            Self::SE => Coord { x: 1, y: -1 },
-            Self::SW => Coord { x: -1, y: -1 },
-        }
-    }
-
-    pub fn get(index: usize) -> Self {
-        match index {
-            0 => Self::NULL,
-            1 => Self::N,
-            2 => Self::S,
-            3 => Self::E,
-            4 => Self::W,
-            5 => Self::NE,
-            6 => Self::NW,
-            7 => Self::SE,
-            8 => Self::SW,
-            _ => Self::NULL,
-        }
-    }
-}
-
-#[derive(Component, Clone)]
-struct Cell {
-    pub genome: Vec<f32>,
-}
-
-#[derive(Component, Clone, PartialEq)]
-struct Coord<T> {
-    pub x: T,
-    pub y: T,
-}
-
-#[derive(Component, Clone)]
-struct Grid {
-    pub data: Array2<bool>,
-}
-
-#[derive(Component, Clone)]
+#[derive(Resource, Clone)]
 struct Parameters {
     pub grid_size: usize,
-    pub n_entities: usize,
+    pub n_initial_entities: usize,
+    pub n_max_entities: usize,
     pub genome_len: usize,
+    pub cell_lifespan: usize,
 }
 
-struct SimTimer(Timer);
+#[derive(Resource)]
+struct SimTime {
+    pub timer: Timer,
+}
 
-#[derive(Component)]
+#[derive(Resource)]
+struct EpochTime {
+    pub timer: Timer,
+}
+
+#[derive(Resource)]
 struct SimState {
     pub paused: bool,
     pub reset: bool,
+    pub epoch: usize,
 }
 
 pub struct SimPlugin;
 
 impl Plugin for SimPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(SimTimer(Timer::from_seconds(0.05, true)))
-            .insert_resource(SimState {
-                paused: false,
-                reset: false,
-            })
-            .add_startup_system(setup)
-            .add_system(handle_input)
-            .add_system(sim_step)
-            .add_system(reset_sim)
-            .add_system(center_camera);
+        app.insert_resource(SimTime {
+            timer: Timer::from_seconds(0.05, TimerMode::Repeating),
+        })
+        .insert_resource(EpochTime {
+            timer: Timer::from_seconds(5., TimerMode::Repeating),
+        })
+        .insert_resource(SimState {
+            paused: false,
+            reset: false,
+            epoch: 0,
+        })
+        .add_startup_system(setup)
+        .add_system(handle_input)
+        .add_system(execute_actions)
+        .add_system(advance_epoch)
+        .add_system(reset_sim)
+        .add_system(center_camera)
+        .add_system(ui);
     }
 }
 
@@ -121,7 +65,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn_bundle(Camera2dBundle {
+    commands.spawn(Camera2dBundle {
         camera_2d: Camera2d {
             clear_color: ClearColorConfig::Custom(Color::MIDNIGHT_BLUE),
         },
@@ -133,8 +77,10 @@ fn setup(
 
         let params = Parameters {
             grid_size: 300,
-            n_entities: 100,
+            n_initial_entities: 100,
+            n_max_entities: 500,
             genome_len: 2 + 9,
+            cell_lifespan: 3,
         };
 
         commands.insert_resource(params.clone());
@@ -143,14 +89,16 @@ fn setup(
         let cell_height = window.height() / params.grid_size as f32;
         let cell_size = 1.5 * cell_height;
 
-        let (cells, coords, grid) =
-            generate_entities(params.n_entities, params.grid_size, params.genome_len);
+        let (cells, coords, grid) = generate_entities(
+            params.n_initial_entities,
+            params.grid_size,
+            params.genome_len,
+        );
         for (cell, coord) in cells.iter().zip(coords.iter()) {
-            commands
-                .spawn()
-                .insert(cell.to_owned())
-                .insert(coord.to_owned())
-                .insert_bundle(MaterialMesh2dBundle {
+            commands.spawn((
+                cell.to_owned(),
+                coord.to_owned(),
+                MaterialMesh2dBundle {
                     mesh: meshes
                         .add(
                             shape::Quad::new(Vec2 {
@@ -167,23 +115,24 @@ fn setup(
                         0.,
                     )),
                     ..default()
-                });
+                },
+            ));
         }
 
         commands.insert_resource(grid);
     }
 }
 
-fn sim_step(
+fn execute_actions(
     time: Res<Time>,
     windows: Res<Windows>,
     sim_state: Res<SimState>,
     params: Res<Parameters>,
-    mut timer: ResMut<SimTimer>,
+    mut sim_time: ResMut<SimTime>,
     mut grid: ResMut<Grid>,
     mut entities_query: Query<(&Cell, &mut Coord<isize>, &mut Transform)>,
 ) {
-    if !sim_state.paused && !sim_state.reset && timer.0.tick(time.delta()).just_finished() {
+    if !sim_state.paused && !sim_state.reset && sim_time.timer.tick(time.delta()).just_finished() {
         for window in windows.iter() {
             let mut rng = rand::thread_rng();
 
@@ -226,11 +175,8 @@ fn sim_step(
                 };
 
                 let dir: Dir = Dir::get(action_index);
-                let dir_coord: Coord<i8> = dir.value();
-                let next_coord = Coord {
-                    x: coord.x + dir_coord.x as isize,
-                    y: coord.y + dir_coord.y as isize,
-                };
+                let dir_coord: Coord<isize> = dir.value();
+                let next_coord = coord.to_owned() + dir_coord;
 
                 //world bounds check
                 if next_coord.x < 0
@@ -259,6 +205,84 @@ fn sim_step(
     }
 }
 
+fn advance_epoch(
+    windows: Res<Windows>,
+    time: Res<Time>,
+    mut sim_state: ResMut<SimState>,
+    params: Res<Parameters>,
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut epoch_time: ResMut<EpochTime>,
+    mut grid: ResMut<Grid>,
+    mut entities_query: Query<(Entity, &mut Cell, &Coord<isize>)>,
+) {
+    if !sim_state.paused && !sim_state.reset && epoch_time.timer.tick(time.delta()).just_finished()
+    {
+        for window in windows.iter() {
+            let cell_width = window.width() / params.grid_size as f32;
+            let cell_height = window.height() / params.grid_size as f32;
+            let cell_size = 1.5 * cell_height;
+
+            let mut rng = rand::thread_rng();
+            let mut children = Vec::<(Cell, Coord<isize>)>::new();
+
+            sim_state.epoch += 1;
+
+            let mut n_entities = entities_query.iter().len();
+
+            for (e, mut cell, coord) in entities_query.iter_mut() {
+                cell.age += 1;
+
+                if cell.age == params.cell_lifespan {
+                    grid.data[[coord.x as usize, coord.y as usize]] = false;
+                    commands.entity(e).despawn_recursive();
+                    n_entities -= 1;
+                    continue;
+                }
+
+                if n_entities >= params.n_max_entities {
+                    continue;
+                }
+
+                let free_coords = grid.clone().get_free_coords(coord.to_owned());
+                if free_coords.len() > 0 {
+                    let child_coord = free_coords[rng.gen_range(0..free_coords.len())];
+                    let child = cell.clone().replicate(0.05);
+                    children.push((child, child_coord));
+                    grid.data[[child_coord.x as usize, child_coord.y as usize]] = true;
+                    n_entities += 1;
+                }
+            }
+
+            for (cell, coord) in children {
+                commands.spawn((
+                    cell.to_owned(),
+                    coord.to_owned(),
+                    MaterialMesh2dBundle {
+                        mesh: meshes
+                            .add(
+                                shape::Quad::new(Vec2 {
+                                    x: cell_size,
+                                    y: cell_size,
+                                })
+                                .into(),
+                            )
+                            .into(),
+                        material: materials.add(ColorMaterial::from(Color::WHITE)),
+                        transform: Transform::from_translation(Vec3::new(
+                            (coord.x as f32) * cell_width,
+                            (coord.y as f32) * cell_height,
+                            0.,
+                        )),
+                        ..default()
+                    },
+                ));
+            }
+        }
+    }
+}
+
 fn center_camera(mut windows: ResMut<Windows>, mut camera: Query<&mut Transform, With<Camera>>) {
     for window in windows.iter_mut() {
         for mut transform in camera.iter_mut() {
@@ -279,8 +303,8 @@ fn reset_sim(
 ) {
     if sim_state.reset {
         for window in windows.iter() {
-            for e in entities_query.iter() {
-                commands.entity(e.0).despawn_recursive();
+            for (e, _) in entities_query.iter() {
+                commands.entity(e).despawn_recursive();
             }
             commands.remove_resource::<Grid>();
 
@@ -288,14 +312,16 @@ fn reset_sim(
             let cell_height = window.height() / params.grid_size as f32;
             let cell_size = 1.5 * cell_height;
 
-            let (cells, coords, grid) =
-                generate_entities(params.n_entities, params.grid_size, params.genome_len);
+            let (cells, coords, grid) = generate_entities(
+                params.n_initial_entities,
+                params.grid_size,
+                params.genome_len,
+            );
             for (cell, coord) in cells.iter().zip(coords.iter()) {
-                commands
-                    .spawn()
-                    .insert(cell.to_owned())
-                    .insert(coord.to_owned())
-                    .insert_bundle(MaterialMesh2dBundle {
+                commands.spawn((
+                    cell.to_owned(),
+                    coord.to_owned(),
+                    MaterialMesh2dBundle {
                         mesh: meshes
                             .add(
                                 shape::Quad::new(Vec2 {
@@ -312,11 +338,13 @@ fn reset_sim(
                             0.,
                         )),
                         ..default()
-                    });
+                    },
+                ));
             }
 
             commands.insert_resource(grid);
 
+            sim_state.epoch = 0;
             sim_state.reset = false;
         }
     }
@@ -324,7 +352,7 @@ fn reset_sim(
 
 fn handle_input(
     keys: Res<Input<KeyCode>>,
-    mut timer: ResMut<SimTimer>,
+    mut sim_time: ResMut<SimTime>,
     mut sim_state: ResMut<SimState>,
 ) {
     if keys.just_pressed(KeyCode::Space) {
@@ -336,13 +364,13 @@ fn handle_input(
 
     //sim speed control
     if keys.just_pressed(KeyCode::Key1) {
-        timer.0.set_duration(Duration::from_secs_f32(0.1));
+        sim_time.timer.set_duration(Duration::from_secs_f32(0.1));
     }
     if keys.just_pressed(KeyCode::Key2) {
-        timer.0.set_duration(Duration::from_secs_f32(0.05));
+        sim_time.timer.set_duration(Duration::from_secs_f32(0.05));
     }
     if keys.just_pressed(KeyCode::Key3) {
-        timer.0.set_duration(Duration::from_secs_f32(0.025));
+        sim_time.timer.set_duration(Duration::from_secs_f32(0.025));
     }
 }
 
@@ -352,15 +380,12 @@ fn generate_entities(
     genome_len: usize,
 ) -> (Vec<Cell>, Vec<Coord<isize>>, Grid) {
     let mut cells = Vec::<Cell>::new();
-    cells.reserve_exact(n_entities);
+    cells.reserve_exact(n_entities * 3);
 
     let mut coords = Vec::<Coord<isize>>::new();
-    coords.reserve_exact(n_entities);
+    coords.reserve_exact(n_entities * 3);
 
-    let v = vec![false; grid_size * grid_size];
-    let mut grid = Grid {
-        data: Array2::<bool>::from_shape_vec((grid_size, grid_size), v).unwrap(),
-    };
+    let mut grid = Grid::init((grid_size, grid_size));
 
     let mut rng = rand::thread_rng();
 
@@ -379,7 +404,7 @@ fn generate_entities(
             .iter()
             .map(|_| rng.gen_range(-1.0..1.))
             .collect();
-        cells.push(Cell { genome });
+        cells.push(Cell { genome, age: 0 });
 
         let coord = Coord::<isize> {
             x: x as isize,
@@ -390,4 +415,13 @@ fn generate_entities(
         n += 1;
     }
     (cells, coords, grid)
+}
+
+fn ui(mut egui_context: ResMut<EguiContext>, sim_state: Res<SimState>, cells_query: Query<&Cell>) {
+    egui::Window::new("Info")
+        .fixed_pos(egui::Pos2::new(0., 0.))
+        .show(egui_context.ctx_mut(), |ui| {
+            ui.label(format!("Epoch {}", sim_state.epoch));
+            ui.label(format!("N {}", cells_query.iter().len()));
+        });
 }
