@@ -5,7 +5,7 @@ use rand::{
 
 use crate::coord::Coord;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum Dir {
     NULL,
     N,

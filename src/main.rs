@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 
-mod cell;
+mod organism;
 mod coord;
 mod dir;
 mod grid;
