@@ -22,7 +22,12 @@ impl Grid {
         }
     }
 
-    pub fn get_coords(self, origin: Coord<isize>, radius: usize, cell_type: CellType) -> Vec<Coord<isize>> {
+    pub fn get_coords(
+        &self,
+        origin: Coord<isize>,
+        radius: usize,
+        cell_type: CellType,
+    ) -> Vec<Coord<isize>> {
         let grid_size = self.data.dim().0;
         let mut neighbors = Vec::<Coord<isize>>::new();
 

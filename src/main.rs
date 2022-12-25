@@ -1,10 +1,12 @@
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 
-mod organism;
 mod coord;
 mod dir;
+mod gene;
 mod grid;
+mod ns;
+mod organism;
 mod sim;
 
 fn main() {

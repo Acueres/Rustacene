@@ -14,7 +14,7 @@ struct Parameters {
     pub grid_size: usize,
     pub n_initial_entities: usize,
     pub n_max_entities: usize,
-    pub genome_len: usize,
+    pub ns_shape: (usize, usize, usize),
     pub average_lifespan: usize,
     pub cell_width: f32,
     pub cell_height: f32,
@@ -89,7 +89,7 @@ fn setup(
             grid_size,
             n_initial_entities: 100,
             n_max_entities: 500,
-            genome_len: 2 + 2 + 9, //x, y, pellet_x, pellet_y, dirs
+            ns_shape: (4, 1, 9), //in = x, y, pellet_x, pellet_y, internal = 1, out = 9 dirs
             average_lifespan: 7,
             cell_height,
             cell_width,
@@ -97,11 +97,8 @@ fn setup(
 
         commands.insert_resource(params.clone());
 
-        let (orgs, coords, mut grid) = init_world(
-            params.n_initial_entities,
-            params.grid_size,
-            params.genome_len,
-        );
+        let (orgs, coords, mut grid) =
+            init_world(params.n_initial_entities, params.grid_size, params.ns_shape);
         for (org, coord) in orgs.iter().zip(coords.iter()) {
             commands.spawn((
                 org.to_owned(),
@@ -174,7 +171,7 @@ fn execute_actions(
         let mut pellets_to_remove = Vec::<Coord<isize>>::new();
 
         for (mut org, mut coord, mut transform) in orgs_query.iter_mut() {
-            org.energy -= 1e-4;
+            org.energy -= 1e-6;
             if org.energy < 0. {
                 continue;
             }
@@ -182,7 +179,7 @@ fn execute_actions(
             let x_coord = coord.x as f32 / params.grid_size as f32;
             let y_coord = coord.y as f32 / params.grid_size as f32;
 
-            let close_pellets = grid.clone().get_coords(*coord, 1, CellType::Consumable);
+            let close_pellets = grid.get_coords(*coord, 1, CellType::Consumable);
             let pellet_coord = close_pellets.choose(&mut rng);
             let mut x_pellet = 0.0;
             let mut y_pellet = 0.0;
@@ -191,33 +188,9 @@ fn execute_actions(
                 y_pellet = pellet_coord.unwrap().y as f32 / params.grid_size as f32;
             }
 
-            let probas: Vec<f32> = vec![
-                (org.genome[0] * (x_coord + y_coord)).tanh(),
-                (org.genome[1] * (2. - x_coord - y_coord)).tanh(),
-                (org.genome[2] * (x_pellet + y_pellet)).tanh(),
-                (org.genome[3] * (2. - x_pellet - y_pellet)).tanh(),
-            ];
+            let inputs: Vec<f32> = vec![x_coord, y_coord, x_pellet, y_pellet];
 
-            let fire_values: Vec<(usize, f32)> = org.genome[4..]
-                .iter()
-                .map(|w| (probas.iter().sum::<f32>() * w).tanh())
-                .collect::<Vec<f32>>()
-                .iter()
-                .enumerate()
-                .map(|(i, p)| {
-                    if p.is_sign_negative() {
-                        (i, 0.0)
-                    } else {
-                        (i, p.to_owned())
-                    }
-                })
-                .collect();
-            let action_index = fire_values
-                .choose_weighted(&mut rng, |(_, p)| *p)
-                .unwrap_or(&(0, 0.))
-                .0;
-
-            let dir: Dir = Dir::get(action_index);
+            let dir = org.get_action(inputs);
             if dir == Dir::NULL {
                 continue;
             }
@@ -246,7 +219,7 @@ fn execute_actions(
                 pellets_to_remove.push(next_coord);
             }
 
-            org.energy -= 1e-3;
+            org.energy -= 1e-4;
 
             transform.translation.x = next_coord.x as f32 * params.cell_width;
             transform.translation.y = next_coord.y as f32 * params.cell_height;
@@ -311,7 +284,7 @@ fn advance_epoch(
                 .get_coords(coord.to_owned(), 1, CellType::Empty);
             if nearby_coords.len() > 0 {
                 let child_coord = nearby_coords[rng.gen_range(0..nearby_coords.len())];
-                let child = org.clone().replicate(0.05);
+                let child = org.clone().replicate(0.05, params.ns_shape);
                 org.energy -= 0.2;
                 children.push((child, child_coord));
                 grid.data[[child_coord.x as usize, child_coord.y as usize]] = CellType::Impassable;
@@ -402,11 +375,8 @@ fn reset_sim(
         }
         commands.remove_resource::<Grid>();
 
-        let (orgs, coords, mut grid) = init_world(
-            params.n_initial_entities,
-            params.grid_size,
-            params.genome_len,
-        );
+        let (orgs, coords, mut grid) =
+            init_world(params.n_initial_entities, params.grid_size, params.ns_shape);
         for (org, coord) in orgs.iter().zip(coords.iter()) {
             commands.spawn((
                 org.to_owned(),
@@ -502,7 +472,7 @@ fn handle_input(
 fn init_world(
     n_entities: usize,
     grid_size: usize,
-    genome_len: usize,
+    ns_shape: (usize, usize, usize),
 ) -> (Vec<Organism>, Vec<Coord<isize>>, Grid) {
     let mut orgs = Vec::<Organism>::new();
     orgs.reserve_exact(n_entities * 3);
@@ -525,15 +495,7 @@ fn init_world(
 
         grid.data[[x, y]] = CellType::Impassable;
 
-        let genome = vec![0.; genome_len]
-            .iter()
-            .map(|_| rng.gen_range(-1.0..1.))
-            .collect();
-        orgs.push(Organism {
-            genome,
-            age: 0,
-            energy: 0.5,
-        });
+        orgs.push(Organism::new(0.5, ns_shape));
 
         let coord = Coord::<isize> {
             x: x as isize,
