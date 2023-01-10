@@ -28,7 +28,7 @@ fn flip_bit(n: i32, p: usize) -> i32 {
 
 #[derive(Copy, Clone, PartialEq)]
 /**Gene structure: 0tt-iiiiiii-ooooooo-wwwwwwwwwwwwwww, where t - connection types, i - input index, o - out index, w - weight*/
-pub struct Gene(i32);
+pub struct Gene(pub i32);
 
 impl Gene {
     /**Get float from 15-bit weight value*/

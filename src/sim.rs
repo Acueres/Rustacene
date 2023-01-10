@@ -9,11 +9,12 @@ use bevy_egui::{egui, EguiContext};
 use rand::seq::SliceRandom;
 use rand::Rng;
 
-#[derive(Resource, Clone)]
+#[derive(Resource, Clone, Copy)]
 struct Parameters {
     pub grid_size: usize,
     pub n_initial_entities: usize,
     pub n_max_entities: usize,
+    pub genome_len: usize,
     pub ns_shape: (usize, usize, usize),
     pub average_lifespan: usize,
     pub cell_width: f32,
@@ -89,6 +90,7 @@ fn setup(
             grid_size,
             n_initial_entities: 100,
             n_max_entities: 500,
+            genome_len: 15,
             ns_shape: (4, 1, 9), //in = x, y, pellet_x, pellet_y, internal = 1, out = 9 dirs
             average_lifespan: 7,
             cell_height,
@@ -97,8 +99,7 @@ fn setup(
 
         commands.insert_resource(params.clone());
 
-        let (orgs, coords, mut grid) =
-            init_world(params.n_initial_entities, params.grid_size, params.ns_shape);
+        let (orgs, coords, mut grid) = init_world(params);
         for (org, coord) in orgs.iter().zip(coords.iter()) {
             commands.spawn((
                 org.to_owned(),
@@ -284,7 +285,9 @@ fn advance_epoch(
                 .get_coords(coord.to_owned(), 1, CellType::Empty);
             if nearby_coords.len() > 0 {
                 let child_coord = nearby_coords[rng.gen_range(0..nearby_coords.len())];
-                let child = org.clone().replicate(0.05, params.ns_shape);
+                let child = org
+                    .clone()
+                    .replicate(0.05, params.genome_len, params.ns_shape);
                 org.energy -= 0.2;
                 children.push((child, child_coord));
                 grid.data[[child_coord.x as usize, child_coord.y as usize]] = CellType::Impassable;
@@ -375,8 +378,7 @@ fn reset_sim(
         }
         commands.remove_resource::<Grid>();
 
-        let (orgs, coords, mut grid) =
-            init_world(params.n_initial_entities, params.grid_size, params.ns_shape);
+        let (orgs, coords, mut grid) = init_world(*params);
         for (org, coord) in orgs.iter().zip(coords.iter()) {
             commands.spawn((
                 org.to_owned(),
@@ -469,25 +471,21 @@ fn handle_input(
     }
 }
 
-fn init_world(
-    n_entities: usize,
-    grid_size: usize,
-    ns_shape: (usize, usize, usize),
-) -> (Vec<Organism>, Vec<Coord<isize>>, Grid) {
+fn init_world(params: Parameters) -> (Vec<Organism>, Vec<Coord<isize>>, Grid) {
     let mut orgs = Vec::<Organism>::new();
-    orgs.reserve_exact(n_entities * 3);
+    orgs.reserve_exact(params.n_initial_entities * 3);
 
     let mut coords = Vec::<Coord<isize>>::new();
-    coords.reserve_exact(n_entities * 3);
+    coords.reserve_exact(params.n_initial_entities * 3);
 
-    let mut grid = Grid::init((grid_size, grid_size));
+    let mut grid = Grid::init((params.grid_size, params.grid_size));
 
     let mut rng = rand::thread_rng();
 
     let mut n = 0;
-    while n < n_entities {
-        let x = rng.gen_range(0..grid_size);
-        let y = rng.gen_range(0..grid_size);
+    while n < params.n_initial_entities {
+        let x = rng.gen_range(0..params.grid_size);
+        let y = rng.gen_range(0..params.grid_size);
 
         if grid.data[[x, y]] == CellType::Impassable {
             continue;
@@ -495,7 +493,7 @@ fn init_world(
 
         grid.data[[x, y]] = CellType::Impassable;
 
-        orgs.push(Organism::new(0.5, ns_shape));
+        orgs.push(Organism::new(0.5, params.genome_len, params.ns_shape));
 
         let coord = Coord::<isize> {
             x: x as isize,
@@ -510,7 +508,7 @@ fn init_world(
 
 fn generate_pellets(n_entities: usize, grid: Grid) -> Vec<Coord<isize>> {
     let rng = &mut rand::thread_rng();
-    let n_pellets = 50 * 250 / n_entities;
+    let n_pellets = 100 * (250 / n_entities);
 
     grid.data
         .indexed_iter()

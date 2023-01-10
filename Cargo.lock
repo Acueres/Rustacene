@@ -2822,6 +2822,7 @@ dependencies = [
  "bevy",
  "bevy_egui",
  "ndarray",
+ "petgraph",
  "rand",
 ]
 

@@ -1,6 +1,6 @@
 use crate::dir::Dir;
 use crate::gene::*;
-use crate::ns::*;
+use crate::ns::NeuralSystem;
 use bevy::prelude::Component;
 use rand::seq::SliceRandom;
 
@@ -13,10 +13,9 @@ pub struct Organism {
 }
 
 impl Organism {
-    pub fn new(energy: f32, ns_shape: (usize, usize, usize)) -> Self {
-        let genome_len = ns_shape.0 + ns_shape.1 + ns_shape.2;
+    pub fn new(energy: f32, genome_len: usize, ns_shape: (usize, usize, usize)) -> Self {
         let genome: Vec<Gene> = get_genome(genome_len);
-        let ns = NeuralSystem::init(genome.clone(), ns_shape);
+        let ns = NeuralSystem::init(genome.clone(), genome_len, ns_shape);
         Self {
             genome,
             age: 0,
@@ -25,10 +24,10 @@ impl Organism {
         }
     }
 
-    pub fn get_action(&self, inputs: Vec<f32>) -> Dir {
+    pub fn get_action(&mut self, input: Vec<f32>) -> Dir {
         let mut rng = rand::thread_rng();
 
-        let probas = self.ns.forward(inputs);
+        let probas = self.ns.forward(&input);
         let action_probas: Vec<(usize, f32)> = probas
             .iter()
             .enumerate()
@@ -48,9 +47,9 @@ impl Organism {
         Dir::get(action_index)
     }
 
-    pub fn replicate(self, mut_p: f32, ns_shape: (usize, usize, usize)) -> Self {
+    pub fn replicate(self, mut_p: f32, genome_len: usize, ns_shape: (usize, usize, usize)) -> Self {
         let new_genome = replicate_genome(self.genome, mut_p as f64);
-        let ns = NeuralSystem::init(new_genome.clone(), ns_shape);
+        let ns = NeuralSystem::init(new_genome.clone(), genome_len, ns_shape);
         Self {
             genome: new_genome,
             age: 0,
