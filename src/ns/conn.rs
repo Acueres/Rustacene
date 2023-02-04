@@ -5,7 +5,6 @@ pub struct Connection {
     pub sensor_out: bool,
     pub in_index: usize,
     pub out_index: usize,
-    pub self_connected: bool,
 }
 
 impl Connection {
@@ -22,7 +21,6 @@ impl Connection {
             sensor_out,
             in_index,
             out_index,
-            self_connected: !(sensor_in || sensor_out) && in_index == out_index,
         }
     }
 }

@@ -1,6 +1,6 @@
 use crate::dir::Dir;
 use crate::gene::*;
-use crate::ns::NeuralSystem;
+use crate::ns::{NeuralSystem, NsShape};
 use bevy::prelude::Component;
 use rand::seq::SliceRandom;
 
@@ -13,7 +13,7 @@ pub struct Organism {
 }
 
 impl Organism {
-    pub fn new(energy: f32, genome_len: usize, ns_shape: (usize, usize, usize)) -> Self {
+    pub fn new(energy: f32, genome_len: usize, ns_shape: NsShape) -> Self {
         let genome: Vec<Gene> = get_genome(genome_len);
         let ns = NeuralSystem::init(genome.clone(), genome_len, ns_shape);
         Self {
@@ -47,7 +47,7 @@ impl Organism {
         Dir::get(action_index)
     }
 
-    pub fn replicate(self, mut_p: f32, genome_len: usize, ns_shape: (usize, usize, usize)) -> Self {
+    pub fn replicate(self, mut_p: f32, genome_len: usize, ns_shape: NsShape) -> Self {
         let new_genome = replicate_genome(self.genome, mut_p as f64);
         let ns = NeuralSystem::init(new_genome.clone(), genome_len, ns_shape);
         Self {

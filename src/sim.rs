@@ -1,6 +1,7 @@
 use crate::coord::Coord;
 use crate::dir::Dir;
 use crate::grid::{CellType, Grid};
+use crate::ns::NsShape;
 use crate::organism::Organism;
 use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::utils::Duration;
@@ -15,7 +16,7 @@ struct Parameters {
     pub n_initial_entities: usize,
     pub n_max_entities: usize,
     pub genome_len: usize,
-    pub ns_shape: (usize, usize, usize),
+    pub ns_shape: NsShape,
     pub average_lifespan: usize,
     pub cell_width: f32,
     pub cell_height: f32,
@@ -91,7 +92,7 @@ fn setup(
             n_initial_entities: 100,
             n_max_entities: 500,
             genome_len: 15,
-            ns_shape: (4, 1, 9), //in = x, y, pellet_x, pellet_y, internal = 1, out = 9 dirs
+            ns_shape: NsShape::new(4, 1, 9), //in = x, y, pellet_x, pellet_y, internal = 1, out = 9 dirs
             average_lifespan: 7,
             cell_height,
             cell_width,
