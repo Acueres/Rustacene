@@ -20,7 +20,7 @@ impl NeuralSystem {
         let mut connections = Vec::<Connection>::with_capacity(n_connections);
 
         for gene in genome {
-            connections.push(gene_to_conn(&gene, &ns_shape));
+            connections.push(Connection::from_gene(gene, &ns_shape));
         }
 
         let mut nn_graph = get_nn_graph(&mut connections, ns_shape.n_neurons);
@@ -127,11 +127,12 @@ fn get_paths(
     ns_shape: &NsShape,
 ) -> (Vec<Vec<usize>>, Vec<Vec<usize>>) {
     let mut paths = Vec::<Vec<usize>>::with_capacity(ns_shape.input);
-    let mut internal_nodes = HashSet::<usize>::with_capacity(ns_shape.internal);
+    let mut visited_nodes = HashSet::<usize>::with_capacity(ns_shape.internal);
+    let mut internal_nodes = HashSet::<usize>::new();
     let out_start = ns_shape.input + ns_shape.internal;
 
     for start in graph.node_indices() {
-        if start.index() >= out_start || !internal_nodes.insert(start.index()) {
+        if start.index() >= out_start || visited_nodes.contains(&start.index()) {
             continue;
         }
 
@@ -139,7 +140,9 @@ fn get_paths(
         let mut path = Vec::<usize>::new();
 
         while let Some(visited) = dfs.next(&graph) {
-            internal_nodes.insert(visited.index());
+            if !visited_nodes.insert(visited.index()) {
+                internal_nodes.insert(visited.index());
+            }
             path.push(visited.index());
         }
         paths.push(path);
@@ -147,10 +150,14 @@ fn get_paths(
 
     let (connected_paths, unconnected_paths): (_, Vec<_>) = paths
         .iter()
-        .partition(|v| v.iter().any(|e| *e >= out_start));
+        .partition(|path| path.iter().any(|e| *e >= out_start));
     let connected_paths: Vec<_> = connected_paths
         .iter()
-        .map(|x| x.to_owned().to_owned())
+        .filter(|path| !internal_nodes.contains(path.first().unwrap()))
+        .collect();
+    let connected_paths: Vec<_> = connected_paths
+        .iter()
+        .map(|x| x.to_owned().to_owned().to_owned())
         .collect();
     let unconnected_paths: Vec<_> = unconnected_paths
         .iter()
@@ -185,91 +192,19 @@ fn prune_nodes(graph: &mut StableGraph<f32, f32>, nodes_to_prune: &HashSet<usize
     }
 }
 
-#[inline]
-fn gene_to_conn(gene: &Gene, ns_shape: &NsShape) -> Connection {
-    let w = gene.get_weightf();
-    let sensor_in = gene.get_in_type() == 1;
-    let sensor_out = gene.get_out_type() == 1;
-
-    let in_index = gene.get_in_index()
-        % if sensor_in {
-            ns_shape.input
-        } else {
-            ns_shape.internal
-        };
-    let in_index = renumber_in_index(in_index, sensor_in, ns_shape.input);
-
-    let out_index = gene.get_out_index()
-        % if sensor_out {
-            ns_shape.output
-        } else {
-            ns_shape.internal
-        };
-    let out_index = renumber_out_index(
-        out_index,
-        sensor_out,
-        ns_shape.input,
-        ns_shape.input + ns_shape.internal,
-    );
-
-    Connection::init(w, sensor_in, sensor_out, in_index, out_index)
-}
-
-#[inline]
-fn renumber_in_index(index: usize, condition: bool, offset: usize) -> usize {
-    if condition {
-        return index;
-    }
-    index + offset
-}
-
-#[inline]
-fn renumber_out_index(index: usize, condition: bool, offset1: usize, offset2: usize) -> usize {
-    if condition {
-        return index + offset2;
-    }
-    index + offset1
-}
-
 #[cfg(test)]
-mod ns_tests {
+mod tests {
     use super::*;
     use rand::seq::SliceRandom;
-
-    #[test]
-    fn test_gene_to_conn() {
-        let ns_shape = NsShape::new(2, 1, 1);
-        let test_conns = vec![
-            Connection::init(1., true, false, 0, 2),
-            Connection::init(1., true, false, 1, 2),
-            Connection::init(1., false, true, 2, 3),
-        ];
-
-        let genes = vec![
-            Gene(0b010_0000000_0000000_000011010000011),
-            Gene(0b010_0000001_0000000_000011010000011),
-            Gene(0b001_0000000_0000000_000011010000011),
-        ];
-
-        let conns: Vec<Connection> = genes
-            .iter()
-            .map(|gene| gene_to_conn(gene, &ns_shape))
-            .collect();
-
-        for (conn, test_conn) in conns.iter().zip(test_conns.iter()) {
-            assert_eq!(test_conn.sensor_in, conn.sensor_in);
-            assert_eq!(test_conn.sensor_out, conn.sensor_out);
-        }
-    }
 
     #[test]
     fn test_nn_output() {
         let ns_shape = NsShape::new(2, 1, 1);
 
         let mut connections = vec![
-            renumber_conn_indexes(&Connection::init(1., true, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::init(1., true, false, 1, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::init(0.3, false, true, 0, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., true, false, 0, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., true, false, 1, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(0.3, false, true, 0, 0), &ns_shape),
         ];
 
         let graph = get_nn_graph(&mut connections, ns_shape.n_neurons);
@@ -291,11 +226,44 @@ mod ns_tests {
     }
 
     #[test]
-    fn test_pruning() {
+    fn test_nn_output_accumulation() {
+        let ns_shape = NsShape::new(1, 3, 1);
+
+        let mut connections = vec![
+            renumber_conn_indexes(&Connection::new(1., true, false, 0, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(0.6, false, false, 1, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(0.4, false, false, 2, 1), &ns_shape),
+            renumber_conn_indexes(&Connection::new(0.5, false, true, 0, 0), &ns_shape),
+        ];
+
+        let graph = get_nn_graph(&mut connections, ns_shape.n_neurons);
+        let (connected_paths, _) = get_paths(&graph, &ns_shape);
+        let sources = get_sources(&connected_paths);
+        assert_eq!(2, sources.len());
+        assert!(sources.contains(&(ns_shape.input + 2)));
+
+        let input = vec![0.8];
+        let accumulated_value_n1: f32 = (0.5 as f32 * 0.4).tanh(); //0.197375327
+        let accumulated_value_n0: f32 = (accumulated_value_n1 * 0.6 + input[0]).tanh(); //0.725151598
+        let test_output: f32 = (accumulated_value_n0 * 0.5).tanh(); //0.347480834
+
+        let mut ns = NeuralSystem {
+            nn_graph: graph,
+            sources,
+            ns_shape,
+        };
+        let output = *ns.forward(&input).first().unwrap();
+
+        assert_eq!((output * 1e9) as usize, (test_output * 1e9) as usize);
+    }
+
+    //test pruning of a single unconnected path
+    #[test]
+    fn test_pruning_simple() {
         let ns_shape = NsShape::new(1, 1, 1);
 
         let mut connections = vec![renumber_conn_indexes(
-            &Connection::init(1., true, false, 0, 0),
+            &Connection::new(1., true, false, 0, 0),
             &ns_shape,
         )];
 
@@ -309,14 +277,15 @@ mod ns_tests {
         assert!(nodes_to_prune.contains(&ns_shape.input));
     }
 
+    //test pruning of a lateral internal unconnected path
     #[test]
-    fn test_pruning_deep() {
+    fn test_pruning_lateral() {
         let ns_shape = NsShape::new(1, 3, 1);
 
         let mut connections = vec![
-            renumber_conn_indexes(&Connection::init(1., true, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::init(1., false, false, 2, 1), &ns_shape),
-            renumber_conn_indexes(&Connection::init(1., false, false, 1, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., true, false, 0, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., false, false, 2, 1), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., false, false, 1, 0), &ns_shape),
         ];
 
         let graph = get_nn_graph(&mut connections, ns_shape.n_neurons);
@@ -337,20 +306,20 @@ mod ns_tests {
 
         let mut connections = vec![
             //input to internal
-            renumber_conn_indexes(&Connection::init(1., true, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::init(1., true, false, 1, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., true, false, 0, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., true, false, 1, 0), &ns_shape),
             //input to output
-            renumber_conn_indexes(&Connection::init(1., true, true, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::init(1., true, true, 2, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., true, true, 0, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., true, true, 2, 0), &ns_shape),
             //self-connected
-            renumber_conn_indexes(&Connection::init(1., false, false, 1, 1), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., false, false, 1, 1), &ns_shape),
             //internal to internal
-            renumber_conn_indexes(&Connection::init(1., false, false, 1, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., false, false, 1, 0), &ns_shape),
             //internal to output
-            renumber_conn_indexes(&Connection::init(1., false, true, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::init(1., false, true, 2, 1), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., false, true, 0, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., false, true, 2, 1), &ns_shape),
             //input to internal unconnected
-            renumber_conn_indexes(&Connection::init(1., true, false, 3, 3), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., true, false, 3, 3), &ns_shape),
         ];
         //ensure connections ordering does not matter
         connections.shuffle(&mut rand::thread_rng());
@@ -393,6 +362,22 @@ mod ns_tests {
             ns_shape.input + ns_shape.internal,
         );
 
-        Connection::init(conn.w, conn.sensor_in, conn.sensor_out, in_index, out_index)
+        Connection::new(conn.w, conn.sensor_in, conn.sensor_out, in_index, out_index)
+    }
+
+    #[inline]
+    fn renumber_in_index(index: usize, condition: bool, offset: usize) -> usize {
+        if condition {
+            return index;
+        }
+        index + offset
+    }
+
+    #[inline]
+    fn renumber_out_index(index: usize, condition: bool, offset1: usize, offset2: usize) -> usize {
+        if condition {
+            return index + offset2;
+        }
+        index + offset1
     }
 }
