@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 
+mod action;
 mod coord;
 mod dir;
 mod gene;

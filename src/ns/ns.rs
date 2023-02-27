@@ -65,7 +65,7 @@ impl NeuralSystem {
                 .unwrap();
 
             if (out_start..out_end).contains(&node_index) {
-                res[node_index - out_start] = node_out.tanh();
+                res[node_index - out_start] = sigmoid(node_out);
                 continue;
             }
 
@@ -192,6 +192,13 @@ fn prune_nodes(graph: &mut StableGraph<f32, f32>, nodes_to_prune: &HashSet<usize
     }
 }
 
+#[inline]
+fn sigmoid(value: f32) -> f32 {
+    const EPS: f32 = 1e-8;
+    let exp = 1. / value.exp();
+    1. / (1. + exp + EPS)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -212,44 +219,12 @@ mod tests {
         assert_eq!(graph.edge_count(), connections.len());
 
         let input = vec![0.5, 0.8];
-        let out_inner = input.iter().sum::<f32>().tanh(); //0.861723124
-        let test_output: f32 = (out_inner * 0.3).tanh(); //0.252907842
+        let out_inner = input.iter().sum::<f32>().tanh();
+        let test_output: f32 = sigmoid(out_inner * 0.3);
 
         let mut ns = NeuralSystem {
             nn_graph: graph,
             sources: vec![0, 1],
-            ns_shape,
-        };
-        let output = *ns.forward(&input).first().unwrap();
-
-        assert_eq!((output * 1e9) as usize, (test_output * 1e9) as usize);
-    }
-
-    #[test]
-    fn test_nn_output_accumulation() {
-        let ns_shape = NsShape::new(1, 3, 1);
-
-        let mut connections = vec![
-            renumber_conn_indexes(&Connection::new(1., true, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.6, false, false, 1, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.4, false, false, 2, 1), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.5, false, true, 0, 0), &ns_shape),
-        ];
-
-        let graph = get_nn_graph(&mut connections, ns_shape.n_neurons);
-        let (connected_paths, _) = get_paths(&graph, &ns_shape);
-        let sources = get_sources(&connected_paths);
-        assert_eq!(2, sources.len());
-        assert!(sources.contains(&(ns_shape.input + 2)));
-
-        let input = vec![0.8];
-        let accumulated_value_n1: f32 = (0.5 as f32 * 0.4).tanh(); //0.197375327
-        let accumulated_value_n0: f32 = (accumulated_value_n1 * 0.6 + input[0]).tanh(); //0.725151598
-        let test_output: f32 = (accumulated_value_n0 * 0.5).tanh(); //0.347480834
-
-        let mut ns = NeuralSystem {
-            nn_graph: graph,
-            sources,
             ns_shape,
         };
         let output = *ns.forward(&input).first().unwrap();

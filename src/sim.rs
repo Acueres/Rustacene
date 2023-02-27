@@ -1,3 +1,4 @@
+use crate::action::Action;
 use crate::coord::Coord;
 use crate::dir::Dir;
 use crate::grid::{CellType, Grid};
@@ -92,7 +93,7 @@ fn setup(
             n_initial_entities: 100,
             n_max_entities: 500,
             genome_len: 15,
-            ns_shape: NsShape::new(4, 1, 9), //in = x, y, pellet_x, pellet_y, internal = 1, out = 9 dirs
+            ns_shape: NsShape::new(4, 5, 12), //in = x, y, pellet_x, pellet_y, internal = 1, out = 9 dirs
             average_lifespan: 7,
             cell_height,
             cell_width,
@@ -169,7 +170,6 @@ fn execute_actions(
     pellets_query: Query<(Entity, &Coord<isize>, With<Pellet>, Without<Organism>)>,
 ) {
     if !sim_state.paused && !sim_state.reset && sim_time.timer.tick(time.delta()).just_finished() {
-        let mut rng = rand::thread_rng();
         let mut pellets_to_remove = Vec::<Coord<isize>>::new();
 
         for (mut org, mut coord, mut transform) in orgs_query.iter_mut() {
@@ -178,25 +178,20 @@ fn execute_actions(
                 continue;
             }
 
-            let x_coord = coord.x as f32 / params.grid_size as f32;
-            let y_coord = coord.y as f32 / params.grid_size as f32;
+            let inputs = process_sensors(
+                &coord.to_owned(),
+                &grid.to_owned(),
+                &params.to_owned(),
+                org.direction,
+            );
 
-            let close_pellets = grid.get_coords(*coord, 1, CellType::Consumable);
-            let pellet_coord = close_pellets.choose(&mut rng);
-            let mut x_pellet = 0.0;
-            let mut y_pellet = 0.0;
-            if pellet_coord != None {
-                x_pellet = pellet_coord.unwrap().x as f32 / params.grid_size as f32;
-                y_pellet = pellet_coord.unwrap().y as f32 / params.grid_size as f32;
-            }
-
-            let inputs: Vec<f32> = vec![x_coord, y_coord, x_pellet, y_pellet];
-
-            let dir = org.get_action(inputs);
-            if dir == Dir::NULL {
+            let action = org.get_action(inputs);
+            if action == Action::Halt {
                 continue;
             }
 
+            let dir = action.get_dir(org.direction);
+            org.direction = dir;
             let dir_coord: Coord<isize> = dir.value();
             let next_coord = coord.to_owned() + dir_coord;
 
@@ -283,7 +278,7 @@ fn advance_epoch(
 
             let nearby_coords = grid
                 .clone()
-                .get_coords(coord.to_owned(), 1, CellType::Empty);
+                .search_area(coord.to_owned(), 1, CellType::Empty);
             if nearby_coords.len() > 0 {
                 let child_coord = nearby_coords[rng.gen_range(0..nearby_coords.len())];
                 let child = org
@@ -444,6 +439,24 @@ fn reset_sim(
     }
 }
 
+#[inline]
+fn process_sensors(coord: &Coord<isize>, grid: &Grid, params: &Parameters, dir: Dir) -> Vec<f32> {
+    let x_coord = coord.x as f32 / params.grid_size as f32;
+    let y_coord = coord.y as f32 / params.grid_size as f32;
+
+    let pellet_coord = grid.search_along_dir(
+        coord.x as usize,
+        coord.y as usize,
+        3,
+        dir,
+        CellType::Consumable,
+    );
+    let x_pellet = 1. - (x_coord - (pellet_coord.x as f32 / params.grid_size as f32));
+    let y_pellet = 1. - (y_coord - (pellet_coord.y as f32 / params.grid_size as f32));
+
+    vec![x_coord, y_coord, x_pellet, y_pellet]
+}
+
 fn handle_input(
     keys: Res<Input<KeyCode>>,
     mut sim_time: ResMut<SimTime>,
@@ -509,7 +522,7 @@ fn init_world(params: Parameters) -> (Vec<Organism>, Vec<Coord<isize>>, Grid) {
 
 fn generate_pellets(n_entities: usize, grid: Grid) -> Vec<Coord<isize>> {
     let rng = &mut rand::thread_rng();
-    let n_pellets = 100 * (250 / n_entities);
+    let n_pellets = (100 * (250 / n_entities)).clamp(0, n_entities);
 
     grid.data
         .indexed_iter()
