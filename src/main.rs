@@ -6,9 +6,11 @@ mod coord;
 mod dir;
 mod gene;
 mod grid;
+mod models;
 mod ns;
 mod organism;
 mod sim;
+mod systems;
 
 fn main() {
     App::new()
