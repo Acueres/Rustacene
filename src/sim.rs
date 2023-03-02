@@ -21,7 +21,7 @@ impl Plugin for SimPlugin {
         .add_system(handle_input)
         .add_system(execute_actions)
         .add_system(advance_epoch)
-        .add_system(reset_sim)
+        .add_system(reset_world)
         .add_system(center_camera)
         .add_system(ui);
     }

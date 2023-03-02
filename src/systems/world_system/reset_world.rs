@@ -3,7 +3,7 @@ use crate::organism::Organism;
 use crate::systems::*;
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 
-pub fn reset_sim(
+pub fn reset_world(
     params: Res<Parameters>,
     mut sim_state: ResMut<SimState>,
     mut commands: Commands,
