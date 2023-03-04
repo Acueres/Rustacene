@@ -1,7 +1,4 @@
-use crate::action::Action;
-use crate::dir::Dir;
-use crate::gene::*;
-use crate::ns::{NeuralSystem, NsShape};
+use super::*;
 use bevy::prelude::Component;
 use rand::seq::SliceRandom;
 use rand::Rng;

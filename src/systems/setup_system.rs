@@ -1,6 +1,6 @@
 use super::*;
+use crate::models::NsShape;
 use crate::resources::*;
-use crate::ns::NsShape;
 use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 

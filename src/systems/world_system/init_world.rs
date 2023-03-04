@@ -1,7 +1,6 @@
-use crate::coord::Coord;
-use crate::resources::{CellType, Grid};
+use crate::models::{Coord, Organism};
 use crate::resources::Parameters;
-use crate::organism::Organism;
+use crate::resources::{CellType, Grid};
 use rand::Rng;
 
 pub fn init_world(params: Parameters) -> (Vec<Organism>, Vec<Coord<isize>>, Grid) {

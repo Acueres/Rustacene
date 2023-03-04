@@ -1,5 +1,4 @@
-use crate::coord::Coord;
-use crate::dir::Dir;
+use crate::models::{Coord, Dir};
 use crate::resources::*;
 use crate::resources::{CellType, Grid};
 

@@ -1,4 +1,4 @@
-use crate::dir::Dir;
+use super::Dir;
 use rand::Rng;
 
 #[derive(Copy, Clone, PartialEq, Debug)]

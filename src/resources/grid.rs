@@ -1,4 +1,4 @@
-use crate::{coord::Coord, dir::Dir};
+use crate::models::{Coord, Dir};
 use bevy::prelude::Resource;
 use ndarray::Array2;
 
@@ -98,7 +98,6 @@ impl Grid {
 #[cfg(test)]
 mod grid_tests {
     use super::*;
-    use crate::coord::Coord;
 
     #[test]
     fn test_search() {

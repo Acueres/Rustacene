@@ -1,6 +1,4 @@
-use super::conn::Connection;
-use super::ns_shape::NsShape;
-use crate::gene::Gene;
+use super::*;
 use petgraph::graph::NodeIndex;
 use petgraph::stable_graph::StableGraph;
 use petgraph::visit::Dfs;

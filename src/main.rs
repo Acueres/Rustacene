@@ -1,13 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 
-mod action;
-mod coord;
-mod dir;
-mod gene;
 mod models;
-mod ns;
-mod organism;
 mod resources;
 mod sim;
 mod systems;

@@ -1,5 +1,5 @@
+use super::Gene;
 use super::NsShape;
-use crate::gene::Gene;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Connection {

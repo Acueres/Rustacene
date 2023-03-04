@@ -1,4 +1,4 @@
-use crate::coord::Coord;
+use super::Coord;
 use rand::{
     distributions::{Distribution, Standard},
     Rng,

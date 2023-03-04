@@ -1,4 +1,4 @@
-use crate::coord::Coord;
+use crate::models::Coord;
 use crate::resources::{CellType, Grid};
 use rand::seq::SliceRandom;
 
