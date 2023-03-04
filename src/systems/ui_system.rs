@@ -1,5 +1,5 @@
 use crate::organism::Organism;
-use crate::systems::*;
+use crate::resources::*;
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext};
 

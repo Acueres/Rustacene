@@ -1,6 +1,6 @@
 use crate::coord::Coord;
-use crate::grid::{CellType, Grid};
 use crate::organism::Organism;
+use crate::resources::*;
 use crate::systems::*;
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;

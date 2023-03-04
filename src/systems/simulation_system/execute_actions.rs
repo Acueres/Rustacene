@@ -1,8 +1,8 @@
 use super::process_sensors;
 use crate::action::Action;
 use crate::coord::Coord;
-use crate::grid::{CellType, Grid};
 use crate::organism::Organism;
+use crate::resources::*;
 use crate::systems::*;
 use bevy::prelude::*;
 

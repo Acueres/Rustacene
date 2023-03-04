@@ -1,4 +1,4 @@
-use crate::models::*;
+use crate::resources::*;
 use crate::systems::*;
 use bevy::prelude::*;
 

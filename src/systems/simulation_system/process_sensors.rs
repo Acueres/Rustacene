@@ -1,7 +1,7 @@
 use crate::coord::Coord;
 use crate::dir::Dir;
-use crate::grid::{CellType, Grid};
-use crate::models::*;
+use crate::resources::*;
+use crate::resources::{CellType, Grid};
 
 #[inline]
 pub fn process_sensors(

@@ -5,10 +5,10 @@ mod action;
 mod coord;
 mod dir;
 mod gene;
-mod grid;
 mod models;
 mod ns;
 mod organism;
+mod resources;
 mod sim;
 mod systems;
 

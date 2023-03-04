@@ -1,4 +1,4 @@
-use super::NsShape;
+use crate::ns::NsShape;
 use bevy::prelude::Resource;
 
 #[derive(Resource, Clone, Copy)]

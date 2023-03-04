@@ -1,5 +1,5 @@
 use crate::coord::Coord;
-use crate::grid::{CellType, Grid};
+use crate::resources::{CellType, Grid};
 use rand::seq::SliceRandom;
 
 pub fn generate_pellets(n_entities: usize, grid: Grid) -> Vec<Coord<isize>> {

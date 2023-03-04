@@ -1,6 +1,6 @@
 use crate::coord::Coord;
-use crate::grid::{CellType, Grid};
-use crate::models::Parameters;
+use crate::resources::{CellType, Grid};
+use crate::resources::Parameters;
 use crate::organism::Organism;
 use rand::Rng;
 
