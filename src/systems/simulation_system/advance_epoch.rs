@@ -1,4 +1,4 @@
-use crate::models::{Coord, Organism};
+use crate::components::{Coord, Organism};
 use crate::resources::*;
 use crate::systems::*;
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};

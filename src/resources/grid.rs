@@ -1,4 +1,4 @@
-use crate::models::{Coord, Dir};
+use crate::components::{Coord, Dir};
 use bevy::prelude::Resource;
 use ndarray::Array2;
 

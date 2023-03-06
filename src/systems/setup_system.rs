@@ -1,5 +1,5 @@
 use super::*;
-use crate::models::NsShape;
+use crate::components::NsShape;
 use crate::resources::*;
 use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};

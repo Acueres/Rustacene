@@ -1,5 +1,5 @@
 use super::process_sensors;
-use crate::models::{Action, Coord, Organism};
+use crate::components::{Action, Coord, Organism};
 use crate::resources::*;
 use crate::systems::*;
 use bevy::prelude::*;

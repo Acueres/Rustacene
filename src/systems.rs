@@ -1,4 +1,4 @@
-use crate::models::*;
+use crate::components::*;
 
 mod camera_system;
 mod input_system;

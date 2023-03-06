@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 
-mod models;
+mod components;
 mod resources;
 mod sim;
 mod systems;

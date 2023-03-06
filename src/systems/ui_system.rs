@@ -1,4 +1,4 @@
-use crate::models::Organism;
+use crate::components::Organism;
 use crate::resources::*;
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext};

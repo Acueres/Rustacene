@@ -1,4 +1,4 @@
-use crate::models::{Coord, Organism};
+use crate::components::{Coord, Organism};
 use crate::resources::Parameters;
 use crate::resources::{CellType, Grid};
 use rand::Rng;
