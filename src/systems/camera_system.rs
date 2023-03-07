@@ -1,13 +1,13 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 pub fn center_camera(
-    mut windows: ResMut<Windows>,
-    mut camera: Query<&mut Transform, With<Camera>>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    mut camera_query: Query<&mut Transform, With<Camera>>,
 ) {
-    for window in windows.iter_mut() {
-        for mut transform in camera.iter_mut() {
-            transform.translation.x = window.width() / 2.;
-            transform.translation.y = window.height() / 2.;
-        }
-    }
+    let window = window_query.get_single().unwrap();
+    let mut camera = camera_query.get_single_mut().unwrap();
+
+    camera.translation.x = window.width() / 2.;
+    camera.translation.y = window.height() / 2.;
 }

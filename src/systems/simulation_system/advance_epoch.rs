@@ -87,9 +87,9 @@ pub fn advance_epoch(
             return;
         }
 
-        let pellet_coords = generate_pellets(n_entities, grid.to_owned());
-        for coord in pellet_coords {
-            grid.data[[coord.x as usize, coord.y as usize]] = CellType::Consumable;
+        let pellet_coords = generate_pellets(n_entities, &grid);
+        for coord in pellet_coords.iter() {
+            grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
 
             commands.spawn((
                 Pellet,

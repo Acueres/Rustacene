@@ -3,11 +3,8 @@ name = "rustacian"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-bevy = "0.9"
-bevy_egui = "0.17.1"
+bevy = "0.10.0"
 rand = "0.8.5"
 ndarray = "0.15.6"
 petgraph = "0.6.2"

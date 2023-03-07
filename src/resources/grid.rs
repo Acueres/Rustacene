@@ -1,13 +1,6 @@
-use crate::components::{Coord, Dir};
+use crate::components::{CellType, Coord, Dir};
 use bevy::prelude::Resource;
 use ndarray::Array2;
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum CellType {
-    Empty,
-    Impassable,
-    Consumable,
-}
 
 #[derive(Resource, Clone)]
 pub struct Grid {
@@ -53,7 +46,7 @@ impl Grid {
         origin_coord
     }
 
-    pub fn _set(&mut self, x: usize, y: usize, cell_type: CellType) {
+    pub fn set(&mut self, x: usize, y: usize, cell_type: CellType) {
         self.data[[x, y]] = cell_type;
     }
 
@@ -105,7 +98,7 @@ mod grid_tests {
 
         let origin = Coord::<isize>::new(10, 10);
         let target_coord = Coord::<isize>::new(12, 12);
-        grid._set(
+        grid.set(
             target_coord.x as usize,
             target_coord.y as usize,
             CellType::Consumable,

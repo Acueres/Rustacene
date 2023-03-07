@@ -48,7 +48,7 @@ pub fn reset_world(
             commands.entity(e).despawn_recursive();
         }
 
-        let pellet_coords = generate_pellets(params.n_initial_entities, grid.to_owned());
+        let pellet_coords = generate_pellets(params.n_initial_entities, &grid);
         for coord in pellet_coords {
             grid.data[[coord.x as usize, coord.y as usize]] = CellType::Consumable;
 

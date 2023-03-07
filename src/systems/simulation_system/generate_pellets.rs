@@ -1,8 +1,9 @@
 use crate::components::Coord;
-use crate::resources::{CellType, Grid};
+use crate::resources::Grid;
+use crate::components::CellType;
 use rand::seq::SliceRandom;
 
-pub fn generate_pellets(n_entities: usize, grid: Grid) -> Vec<Coord<isize>> {
+pub fn generate_pellets(n_entities: usize, grid: &Grid) -> Vec<Coord<isize>> {
     let rng = &mut rand::thread_rng();
     let n_pellets = (100 * (250 / n_entities)).clamp(0, n_entities);
 

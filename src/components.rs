@@ -1,4 +1,5 @@
 mod action;
+mod cell_type;
 mod conn;
 mod coord;
 mod dir;
@@ -9,6 +10,7 @@ mod organism;
 mod pellet;
 
 pub use action::*;
+pub use cell_type::*;
 pub use conn::*;
 pub use coord::*;
 pub use dir::*;
