@@ -4,7 +4,7 @@ use ndarray::Array2;
 
 #[derive(Resource, Clone)]
 pub struct Grid {
-    pub data: Array2<CellType>,
+    data: Array2<CellType>,
 }
 
 impl Grid {
@@ -48,6 +48,23 @@ impl Grid {
 
     pub fn set(&mut self, x: usize, y: usize, cell_type: CellType) {
         self.data[[x, y]] = cell_type;
+    }
+
+    pub fn get(&self, x: usize, y: usize) -> CellType {
+        self.data[[x, y]]
+    }
+
+    pub fn get_cell_coords(&self, cell_type: CellType) -> Vec<Coord<isize>> {
+        self.data
+            .indexed_iter()
+            .filter(|x| x.1.to_owned() == cell_type)
+            .collect::<Vec<((usize, usize), &CellType)>>()
+            .iter()
+            .map(|v| Coord::<isize> {
+                x: v.0 .0 as isize,
+                y: v.0 .1 as isize,
+            })
+            .collect::<Vec<Coord<isize>>>()
     }
 
     pub fn search_area(

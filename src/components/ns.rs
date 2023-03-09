@@ -1,11 +1,12 @@
 use super::*;
+use bevy::prelude::Component;
 use petgraph::graph::NodeIndex;
 use petgraph::stable_graph::StableGraph;
 use petgraph::visit::Dfs;
 use petgraph::Direction;
 use std::collections::{HashSet, VecDeque};
 
-#[derive(Clone)]
+#[derive(Component, Clone)]
 
 pub struct NeuralSystem {
     ns_shape: NsShape,

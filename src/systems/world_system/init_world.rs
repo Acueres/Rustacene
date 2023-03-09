@@ -18,11 +18,11 @@ pub fn init_world(params: Parameters) -> (Vec<Organism>, Vec<Coord<isize>>, Grid
         let x = rng.gen_range(0..params.grid_size);
         let y = rng.gen_range(0..params.grid_size);
 
-        if grid.data[[x, y]] == CellType::Impassable {
+        if grid.get(x, y) == CellType::Impassable {
             continue;
         }
 
-        grid.data[[x, y]] = CellType::Impassable;
+        grid.set(x, y, CellType::Impassable);
 
         orgs.push(Organism::new(0.5, params.genome_len, params.ns_shape));
 

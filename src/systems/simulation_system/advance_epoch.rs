@@ -1,7 +1,7 @@
 use crate::components::{Coord, Organism};
 use crate::resources::*;
 use crate::systems::*;
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::prelude::*;
 use rand::Rng;
 
 pub fn advance_epoch(
@@ -33,7 +33,7 @@ pub fn advance_epoch(
                         (0.5 + (org.age as f64 / params.average_lifespan as f64)).clamp(0., 1.),
                     ))
             {
-                grid.data[[coord.x as usize, coord.y as usize]] = CellType::Empty;
+                grid.set(coord.x as usize, coord.y as usize, CellType::Empty);
                 commands.entity(e).despawn_recursive();
                 n_entities -= 1;
                 continue;
@@ -53,34 +53,25 @@ pub fn advance_epoch(
                     .replicate(0.05, params.genome_len, params.ns_shape);
                 org.energy -= 0.2;
                 children.push((child, child_coord));
-                grid.data[[child_coord.x as usize, child_coord.y as usize]] = CellType::Impassable;
+                grid.set(
+                    child_coord.x as usize,
+                    child_coord.y as usize,
+                    CellType::Impassable,
+                );
                 n_entities += 1;
             }
         }
 
-        for (org, coord) in children {
-            commands.spawn((
-                org.to_owned(),
-                coord.to_owned(),
-                MaterialMesh2dBundle {
-                    mesh: meshes
-                        .add(
-                            shape::Quad::new(Vec2 {
-                                x: params.cell_width,
-                                y: params.cell_width,
-                            })
-                            .into(),
-                        )
-                        .into(),
-                    material: materials.add(ColorMaterial::from(Color::WHITE)),
-                    transform: Transform::from_translation(Vec3::new(
-                        (coord.x as f32) * params.cell_width,
-                        (coord.y as f32) * params.cell_height,
-                        0.,
-                    )),
-                    ..default()
-                },
-            ));
+        for (org, coord) in children.iter() {
+            spawn_organism(
+                &mut commands,
+                &mut meshes,
+                &mut materials,
+                org,
+                coord,
+                params.cell_width,
+                params.cell_height,
+            );
         }
 
         if n_entities == 0 {
@@ -90,29 +81,14 @@ pub fn advance_epoch(
         let pellet_coords = generate_pellets(n_entities, &grid);
         for coord in pellet_coords.iter() {
             grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
-
-            commands.spawn((
-                Pellet,
-                coord.to_owned(),
-                MaterialMesh2dBundle {
-                    mesh: meshes
-                        .add(
-                            shape::Quad::new(Vec2 {
-                                x: params.cell_width,
-                                y: params.cell_width,
-                            })
-                            .into(),
-                        )
-                        .into(),
-                    material: materials.add(ColorMaterial::from(Color::GREEN)),
-                    transform: Transform::from_translation(Vec3::new(
-                        (coord.x as f32) * params.cell_width,
-                        (coord.y as f32) * params.cell_height,
-                        0.,
-                    )),
-                    ..default()
-                },
-            ));
+            spawn_pellet(
+                &mut commands,
+                &mut meshes,
+                &mut materials,
+                coord,
+                params.cell_width,
+                params.cell_height,
+            );
         }
     }
 }

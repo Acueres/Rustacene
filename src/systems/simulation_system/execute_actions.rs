@@ -50,10 +50,9 @@ pub fn execute_actions(
             }
 
             //collision check
-            if grid.data[[next_coord.x as usize, next_coord.y as usize]] == CellType::Impassable {
+            if grid.get(next_coord.x as usize, next_coord.y as usize) == CellType::Impassable {
                 continue;
-            } else if grid.data[[next_coord.x as usize, next_coord.y as usize]]
-                == CellType::Consumable
+            } else if grid.get(next_coord.x as usize, next_coord.y as usize) == CellType::Consumable
             {
                 org.energy += 0.2;
                 org.energy = org.energy.clamp(f32::NEG_INFINITY, 1.);
@@ -66,8 +65,12 @@ pub fn execute_actions(
             transform.translation.x = next_coord.x as f32 * params.cell_width;
             transform.translation.y = next_coord.y as f32 * params.cell_height;
 
-            grid.data[[coord.x as usize, coord.y as usize]] = CellType::Empty;
-            grid.data[[next_coord.x as usize, next_coord.y as usize]] = CellType::Impassable;
+            grid.set(coord.x as usize, coord.y as usize, CellType::Empty);
+            grid.set(
+                next_coord.x as usize,
+                next_coord.y as usize,
+                CellType::Impassable,
+            );
 
             *coord = next_coord;
         }
