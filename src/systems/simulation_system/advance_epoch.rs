@@ -34,7 +34,7 @@ pub fn advance_epoch(
                     ))
             {
                 grid.set(coord.x as usize, coord.y as usize, CellType::Empty);
-                commands.entity(e).despawn_recursive();
+                commands.entity(e).despawn();
                 n_entities -= 1;
                 continue;
             }
@@ -48,9 +48,7 @@ pub fn advance_epoch(
                 .search_area(coord.to_owned(), 1, CellType::Empty);
             if nearby_coords.len() > 0 {
                 let child_coord = nearby_coords[rng.gen_range(0..nearby_coords.len())];
-                let child = org
-                    .clone()
-                    .replicate(0.05, params.genome_len, params.ns_shape);
+                let child = org.clone().replicate(0.05);
                 org.energy -= 0.2;
                 children.push((child, child_coord));
                 grid.set(
@@ -69,8 +67,7 @@ pub fn advance_epoch(
                 &mut materials,
                 org,
                 coord,
-                params.cell_width,
-                params.cell_height,
+                &params,
             );
         }
 

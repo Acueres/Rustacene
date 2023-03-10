@@ -1,4 +1,4 @@
-use super::process_sensors;
+use super::*;
 use crate::components::{Action, Coord, Organism};
 use crate::resources::*;
 use crate::systems::*;
@@ -11,13 +11,19 @@ pub fn execute_actions(
     params: Res<Parameters>,
     mut sim_time: ResMut<SimTime>,
     mut grid: ResMut<Grid>,
-    mut orgs_query: Query<(&mut Organism, &mut Coord<isize>, &mut Transform)>,
+    mut orgs_query: Query<(
+        &mut Organism,
+        &mut NeuralSystem,
+        &mut Coord<isize>,
+        &mut Dir,
+        &mut Transform,
+    )>,
     pellets_query: Query<(Entity, &Coord<isize>, With<Pellet>, Without<Organism>)>,
 ) {
     if !sim_state.paused && !sim_state.reset && sim_time.timer.tick(time.delta()).just_finished() {
         let mut pellets_to_remove = Vec::<Coord<isize>>::new();
 
-        for (mut org, mut coord, mut transform) in orgs_query.iter_mut() {
+        for (mut org, mut ns, mut coord, mut curr_dir, mut transform) in orgs_query.iter_mut() {
             org.energy -= 1e-6;
             if org.energy < 0. {
                 continue;
@@ -27,16 +33,16 @@ pub fn execute_actions(
                 &coord.to_owned(),
                 &grid.to_owned(),
                 &params.to_owned(),
-                org.direction,
+                *curr_dir,
             );
 
-            let action = org.get_action(inputs);
+            let action = ns.get_action(inputs);
             if action == Action::Halt {
                 continue;
             }
 
-            let dir = action.get_dir(org.direction);
-            org.direction = dir;
+            let dir = action.get_dir(*curr_dir);
+            *curr_dir = dir;
             let dir_coord: Coord<isize> = dir.value();
             let next_coord = coord.to_owned() + dir_coord;
 

@@ -4,6 +4,7 @@ use petgraph::graph::NodeIndex;
 use petgraph::stable_graph::StableGraph;
 use petgraph::visit::Dfs;
 use petgraph::Direction;
+use rand::prelude::SliceRandom;
 use std::collections::{HashSet, VecDeque};
 
 #[derive(Component, Clone)]
@@ -37,6 +38,24 @@ impl NeuralSystem {
         res.init_sources();
 
         res
+    }
+
+    pub fn get_action(&mut self, input: Vec<f32>) -> Action {
+        let mut rng = rand::thread_rng();
+
+        let probas: Vec<_> = self
+            .forward(&input)
+            .iter()
+            .enumerate()
+            .map(|(i, p)| (i, p.to_owned()))
+            .collect();
+
+        let action_index = probas
+            .choose_weighted(&mut rng, |(_, p)| *p)
+            .unwrap_or(&(0, 0.))
+            .0;
+
+        Action::get(action_index)
     }
 
     pub fn forward(&mut self, input: &Vec<f32>) -> Vec<f32> {

@@ -26,8 +26,7 @@ pub fn reset_world(
                 &mut materials,
                 org,
                 coord,
-                params.cell_width,
-                params.cell_height,
+                &params,
             );
         }
 

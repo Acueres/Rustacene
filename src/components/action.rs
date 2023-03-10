@@ -18,7 +18,7 @@ pub enum Action {
 }
 
 impl Action {
-    pub fn get_dir(self, prev_dir: Dir) -> Dir {
+    pub fn get_dir(self, curr_dir: Dir) -> Dir {
         match self {
             Self::MoveN => Dir::N,
             Self::MoveS => Dir::S,
@@ -28,8 +28,8 @@ impl Action {
             Self::MoveNW => Dir::NW,
             Self::MoveSE => Dir::SE,
             Self::MoveSW => Dir::SW,
-            Self::MoveContinue => prev_dir,
-            Self::MoveReverse => -prev_dir,
+            Self::MoveContinue => curr_dir,
+            Self::MoveReverse => -curr_dir,
             Self::MoveRandom => rand::thread_rng().gen(),
             _ => panic!("Unknown value: {:?}", self),
         }

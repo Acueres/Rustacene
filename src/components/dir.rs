@@ -1,11 +1,12 @@
 use super::Coord;
+use bevy::prelude::Component;
 use rand::{
     distributions::{Distribution, Standard},
     Rng,
 };
 use std::ops::Neg;
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Component, Copy, Clone, PartialEq, Debug)]
 pub enum Dir {
     N,
     S,

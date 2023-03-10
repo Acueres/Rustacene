@@ -46,8 +46,7 @@ pub fn setup_sim(
             &mut materials,
             org,
             coord,
-            cell_width,
-            cell_height,
+            &params,
         );
     }
 

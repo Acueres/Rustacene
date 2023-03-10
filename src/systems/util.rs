@@ -1,5 +1,7 @@
-use crate::components::{Coord, Organism, Pellet};
+use crate::components::{Coord, Dir, NeuralSystem, Organism, Pellet};
+use crate::resources::Parameters;
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use rand::Rng;
 
 pub fn spawn_organism(
     commands: &mut Commands,
@@ -7,26 +9,30 @@ pub fn spawn_organism(
     materials: &mut ResMut<Assets<ColorMaterial>>,
     org: &Organism,
     coord: &Coord<isize>,
-    cell_width: f32,
-    cell_height: f32,
+    params: &Parameters,
 ) {
+    let dir: Dir = rand::thread_rng().gen();
+    let ns = NeuralSystem::init(org.genome.clone(), params.genome_len, params.ns_shape);
+
     commands.spawn((
         org.to_owned(),
+        ns,
         coord.to_owned(),
+        dir,
         MaterialMesh2dBundle {
             mesh: meshes
                 .add(
                     shape::Quad::new(Vec2 {
-                        x: cell_width,
-                        y: cell_width,
+                        x: params.cell_width,
+                        y: params.cell_width,
                     })
                     .into(),
                 )
                 .into(),
             material: materials.add(ColorMaterial::from(Color::WHITE)),
             transform: Transform::from_translation(Vec3::new(
-                (coord.x as f32) * cell_width,
-                (coord.y as f32) * cell_height,
+                (coord.x as f32) * params.cell_width,
+                (coord.y as f32) * params.cell_height,
                 0.,
             )),
             ..default()
