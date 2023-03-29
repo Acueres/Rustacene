@@ -1,37 +1,27 @@
 use super::Dir;
 use rand::Rng;
 
+pub const N_ACTIONS: usize = 6;
+
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Action {
     Halt,
     MoveContinue,
     MoveRandom,
     MoveReverse,
-    MoveN,
-    MoveS,
-    MoveE,
-    MoveW,
-    MoveNE,
-    MoveNW,
-    MoveSE,
-    MoveSW,
+    Rotate,
+    RotateCounter,
 }
 
 impl Action {
     pub fn get_dir(self, curr_dir: Dir) -> Dir {
         match self {
-            Self::MoveN => Dir::N,
-            Self::MoveS => Dir::S,
-            Self::MoveE => Dir::E,
-            Self::MoveW => Dir::W,
-            Self::MoveNE => Dir::NE,
-            Self::MoveNW => Dir::NW,
-            Self::MoveSE => Dir::SE,
-            Self::MoveSW => Dir::SW,
             Self::MoveContinue => curr_dir,
-            Self::MoveReverse => -curr_dir,
             Self::MoveRandom => rand::thread_rng().gen(),
-            _ => panic!("Unknown value: {:?}", self),
+            Self::MoveReverse => -curr_dir,
+            Self::Rotate => curr_dir.rotate(),
+            Self::RotateCounter => curr_dir.rotate_counter(),
+            _ => panic!("Value not valid: {:?}", self),
         }
     }
 
@@ -41,15 +31,9 @@ impl Action {
             1 => Self::MoveContinue,
             2 => Self::MoveRandom,
             3 => Self::MoveReverse,
-            4 => Self::MoveN,
-            5 => Self::MoveS,
-            6 => Self::MoveE,
-            7 => Self::MoveW,
-            8 => Self::MoveNE,
-            9 => Self::MoveNW,
-            10 => Self::MoveSE,
-            11 => Self::MoveSW,
-            _ => panic!("Unknown value: {}", index),
+            4 => Self::Rotate,
+            5 => Self::RotateCounter,
+            _ => panic!("Value not valid: {}", index),
         }
     }
 }

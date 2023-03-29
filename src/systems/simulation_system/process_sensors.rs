@@ -10,16 +10,18 @@ pub fn process_sensors(
 ) -> Vec<f32> {
     let x_coord = coord.x as f32 / params.grid_size as f32;
     let y_coord = coord.y as f32 / params.grid_size as f32;
+    let x_coord_inv = 1. - x_coord;
+    let y_coord_inv = 1. - y_coord;
 
     let pellet_coord = grid.search_along_dir(
         coord.x as usize,
         coord.y as usize,
-        3,
+        5,
         dir,
         CellType::Consumable,
     );
-    let x_pellet = 1. - (x_coord - (pellet_coord.x as f32 / params.grid_size as f32));
-    let y_pellet = 1. - (y_coord - (pellet_coord.y as f32 / params.grid_size as f32));
 
-    vec![x_coord, y_coord, x_pellet, y_pellet]
+    let pellet_exists = if *coord != pellet_coord { 1. } else { 0. };
+
+    vec![x_coord, y_coord, x_coord_inv, y_coord_inv, pellet_exists]
 }

@@ -30,7 +30,7 @@ pub fn setup_sim(
         n_initial_entities: 100,
         n_max_entities: 500,
         genome_len: 15,
-        ns_shape: NsShape::new(4, 5, 12), //in = x, y, pellet_x, pellet_y, internal = 1, out = 9 dirs
+        ns_shape: NsShape::new(5, 5, N_ACTIONS), //in = x, y, pellet_x, pellet_y, internal = 1, out = n of actions
         average_lifespan: 7,
         cell_height,
         cell_width,

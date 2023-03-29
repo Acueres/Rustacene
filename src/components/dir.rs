@@ -61,6 +61,34 @@ impl Dir {
             _ => panic!("Unknown value: {}", index),
         }
     }
+
+    //*Clockwise rotation */
+    pub fn rotate(self) -> Self {
+        match self {
+            Self::N => Self::NE,
+            Self::S => Self::SW,
+            Self::E => Self::SE,
+            Self::W => Self::NW,
+            Self::NE => Self::E,
+            Self::NW => Self::N,
+            Self::SE => Self::S,
+            Self::SW => Self::W,
+        }
+    }
+
+    //*Counterclockwise rotation */
+    pub fn rotate_counter(self) -> Self {
+        match self {
+            Self::N => Self::NW,
+            Self::S => Self::SE,
+            Self::E => Self::NE,
+            Self::W => Self::SW,
+            Self::NE => Self::N,
+            Self::NW => Self::W,
+            Self::SE => Self::E,
+            Self::SW => Self::S,
+        }
+    }
 }
 
 impl Neg for Dir {
