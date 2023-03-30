@@ -1,11 +1,18 @@
-use crate::components::CellType;
-use crate::components::Coord;
+use crate::components::*;
 use crate::resources::Grid;
 use rand::seq::SliceRandom;
 
-pub fn generate_pellets(n_entities: usize, grid: &Grid) -> Vec<Coord<isize>> {
+const MAX_ENERGY: f32 = 100.;
+
+pub fn generate_pellets(total_org_energy: f32, grid: &Grid) -> Vec<Coord<isize>> {
     let rng = &mut rand::thread_rng();
-    let n_pellets = (100 * (250 / n_entities)).clamp(0, n_entities);
+    let total_pellet_energy =
+        grid.get_cell_coords(CellType::Consumable).iter().len() as f32 * PELLET_ENERGY;
+    let total_energy = total_org_energy + total_pellet_energy;
+    let n_pellets = (((MAX_ENERGY - total_energy) * 0.05) / PELLET_ENERGY) as usize;
+    if n_pellets <= 0 {
+        return Vec::<Coord<isize>>::new();
+    }
 
     grid.get_cell_coords(CellType::Empty)
         .choose_multiple(rng, n_pellets)

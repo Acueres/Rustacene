@@ -7,6 +7,8 @@ use petgraph::Direction;
 use rand::prelude::SliceRandom;
 use std::collections::{HashSet, VecDeque};
 
+pub const NS_ENERGY_COST: f32 = 1e-6;
+
 #[derive(Component, Clone)]
 
 pub struct NeuralSystem {

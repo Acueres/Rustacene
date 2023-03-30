@@ -19,6 +19,7 @@ pub fn advance_epoch(
     {
         let mut rng = rand::thread_rng();
         let mut children = Vec::<(Organism, Coord<isize>)>::new();
+        let mut total_orgs_energy: f32 = 0.;
 
         sim_state.epoch += 1;
 
@@ -30,13 +31,24 @@ pub fn advance_epoch(
             if org.energy.is_sign_negative()
                 || (org.age >= params.average_lifespan
                     && rng.gen_bool(
-                        (0.5 + (org.age as f64 / params.average_lifespan as f64)).clamp(0., 1.),
+                        (0.5 + (org.age as f64 / params.average_lifespan as f64)).clamp(0.5, 1.),
                     ))
             {
-                grid.set(coord.x as usize, coord.y as usize, CellType::Empty);
+                grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
+                spawn_pellet(
+                    &mut commands,
+                    &mut meshes,
+                    &mut materials,
+                    coord,
+                    params.cell_width,
+                    params.cell_height,
+                );
+
                 commands.entity(e).despawn();
                 n_entities -= 1;
                 continue;
+            } else {
+                total_orgs_energy += org.energy;
             }
 
             if n_entities >= params.n_max_entities || org.energy <= 0.2 {
@@ -48,8 +60,10 @@ pub fn advance_epoch(
                 .search_area(coord.to_owned(), 1, CellType::Empty);
             if nearby_coords.len() > 0 {
                 let child_coord = nearby_coords[rng.gen_range(0..nearby_coords.len())];
-                let child = org.clone().replicate(0.05);
-                org.energy -= 0.2;
+                let child = org.replicate(0.05);
+
+                total_orgs_energy += child.energy;
+
                 children.push((child, child_coord));
                 grid.set(
                     child_coord.x as usize,
@@ -75,7 +89,7 @@ pub fn advance_epoch(
             return;
         }
 
-        let pellet_coords = generate_pellets(n_entities, &grid);
+        let pellet_coords = generate_pellets(total_orgs_energy, &grid);
         for coord in pellet_coords.iter() {
             grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
             spawn_pellet(

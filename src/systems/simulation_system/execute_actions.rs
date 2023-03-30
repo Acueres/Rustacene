@@ -24,7 +24,6 @@ pub fn execute_actions(
         let mut pellets_to_remove = Vec::<Coord<isize>>::new();
 
         for (mut org, mut ns, mut coord, mut curr_dir, mut transform) in orgs_query.iter_mut() {
-            org.energy -= 1e-6;
             if org.energy < 0. {
                 continue;
             }
@@ -37,6 +36,8 @@ pub fn execute_actions(
             );
 
             let action = ns.get_action(inputs);
+            org.sub_energy(NS_ENERGY_COST); // thinking requires energy
+
             if action == Action::Halt {
                 continue;
             }
@@ -60,13 +61,13 @@ pub fn execute_actions(
                 continue;
             } else if grid.get(next_coord.x as usize, next_coord.y as usize) == CellType::Consumable
             {
-                org.energy += 0.2;
-                org.energy = org.energy.clamp(f32::NEG_INFINITY, 1.);
+                org.add_energy(PELLET_ENERGY); // consuming pellet gives energy
+                org.energy = org.energy.clamp(-1., 1.);
 
                 pellets_to_remove.push(next_coord);
             }
 
-            org.energy -= 1e-4;
+            org.sub_energy(1e-4); // movement takes energy
 
             transform.translation.x = next_coord.x as f32 * params.cell_width;
             transform.translation.y = next_coord.y as f32 * params.cell_height;

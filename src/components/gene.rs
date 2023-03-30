@@ -8,7 +8,7 @@ pub fn get_genome(len: usize) -> Vec<Gene> {
     return (0..len).map(|_| rng.gen::<Gene>()).collect();
 }
 
-pub fn replicate_genome(genome: Vec<Gene>, mut_p: f64) -> Vec<Gene> {
+pub fn replicate_genome(genome: &Vec<Gene>, mut_p: f64) -> Vec<Gene> {
     let mut rng = rand::thread_rng();
     genome
         .iter()

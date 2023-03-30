@@ -2,12 +2,11 @@ use crate::components::{CellType, Coord, Organism};
 use crate::resources::{Grid, Parameters};
 use rand::Rng;
 
-pub fn init_world(params: Parameters) -> (Vec<Organism>, Vec<Coord<isize>>, Grid) {
-    let mut orgs = Vec::<Organism>::new();
-    orgs.reserve_exact(params.n_initial_entities * 3);
+const INITIAL_ENERGY: f32 = 0.2;
 
-    let mut coords = Vec::<Coord<isize>>::new();
-    coords.reserve_exact(params.n_initial_entities * 3);
+pub fn init_world(params: Parameters) -> (Vec<Organism>, Vec<Coord<isize>>, Grid) {
+    let mut orgs = Vec::<Organism>::with_capacity(params.n_initial_entities * 3);
+    let mut coords = Vec::<Coord<isize>>::with_capacity(params.n_initial_entities * 3);
 
     let mut grid = Grid::init((params.grid_size, params.grid_size));
 
@@ -24,7 +23,7 @@ pub fn init_world(params: Parameters) -> (Vec<Organism>, Vec<Coord<isize>>, Grid
 
         grid.set(x, y, CellType::Impassable);
 
-        orgs.push(Organism::new(0.5, params.genome_len));
+        orgs.push(Organism::new(INITIAL_ENERGY, params.genome_len));
 
         let coord = Coord::<isize> {
             x: x as isize,

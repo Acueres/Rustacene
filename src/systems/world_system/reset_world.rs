@@ -34,7 +34,7 @@ pub fn reset_world(
             commands.entity(e).despawn_recursive();
         }
 
-        let pellet_coords = generate_pellets(params.n_initial_entities, &grid);
+        let pellet_coords = generate_pellets(orgs.iter().map(|org| org.energy).sum::<f32>(), &grid);
         for coord in pellet_coords {
             grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
             spawn_pellet(
