@@ -28,7 +28,8 @@ pub fn execute_actions(
                 continue;
             }
 
-            let inputs = process_sensors(
+            let inputs = read_sensors(
+                &org,
                 &coord.to_owned(),
                 &grid.to_owned(),
                 &params.to_owned(),

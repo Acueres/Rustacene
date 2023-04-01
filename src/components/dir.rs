@@ -89,6 +89,43 @@ impl Dir {
             Self::SW => Self::S,
         }
     }
+
+    pub fn to_arr(self) -> [f32; 4] {
+        let mut res = [0.; 4];
+
+        match self {
+            Self::N => {
+                res[0] = 1.;
+            }
+            Self::S => {
+                res[1] = 1.;
+            }
+            Self::E => {
+                res[2] = 1.;
+            }
+            Self::W => {
+                res[3] = 1.;
+            }
+            Self::NE => {
+                res[0] = 1.;
+                res[2] = 1.;
+            }
+            Self::NW => {
+                res[0] = 1.;
+                res[3] = 1.;
+            }
+            Self::SE => {
+                res[1] = 1.;
+                res[2] = 1.;
+            }
+            Self::SW => {
+                res[1] = 1.;
+                res[3] = 1.;
+            }
+        }
+
+        res
+    }
 }
 
 impl Neg for Dir {
