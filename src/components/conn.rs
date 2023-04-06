@@ -37,7 +37,7 @@ impl Connection {
             % if sensor_in {
                 ns_shape.input
             } else {
-                ns_shape.internal
+                ns_shape.hidden
             };
         let in_index = renumber_in_index(in_index, sensor_in, ns_shape.input);
 
@@ -45,13 +45,13 @@ impl Connection {
             % if sensor_out {
                 ns_shape.output
             } else {
-                ns_shape.internal
+                ns_shape.hidden
             };
         let out_index = renumber_out_index(
             out_index,
             sensor_out,
             ns_shape.input,
-            ns_shape.input + ns_shape.internal,
+            ns_shape.input + ns_shape.hidden,
         );
 
         Connection::new(w, sensor_in, sensor_out, in_index, out_index)

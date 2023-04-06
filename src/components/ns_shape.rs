@@ -2,18 +2,18 @@
 #[derive(Clone, Copy)]
 pub struct NsShape {
     pub input: usize,
-    pub internal: usize,
+    pub hidden: usize,
     pub output: usize,
     pub n_neurons: usize,
 }
 
 impl NsShape {
-    pub fn new(input: usize, internal: usize, output: usize) -> Self {
+    pub fn new(input: usize, hidden: usize, output: usize) -> Self {
         Self {
             input,
-            internal,
+            hidden,
             output,
-            n_neurons: input + internal + output,
+            n_neurons: input + hidden + output,
         }
     }
 }

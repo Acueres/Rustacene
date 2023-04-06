@@ -1,4 +1,4 @@
-use crate::components::{Coord, Dir, NeuralSystem, Organism, Pellet};
+use crate::components::{Connection, Coord, Dir, NeuralSystem, Organism, Pellet};
 use crate::resources::Parameters;
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
@@ -12,7 +12,13 @@ pub fn spawn_organism(
     params: &Parameters,
 ) {
     let dir: Dir = rand::thread_rng().gen();
-    let ns = NeuralSystem::init(org.genome.clone(), params.genome_len, params.ns_shape);
+    let ns = NeuralSystem::new(
+        &org.genome
+            .iter()
+            .map(|gene| Connection::from_gene(*gene, &params.ns_shape))
+            .collect::<Vec<Connection>>(),
+        params.ns_shape,
+    );
 
     commands.spawn((
         org.to_owned(),
