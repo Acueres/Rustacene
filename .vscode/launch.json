@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'rustacian'",
+            "name": "Debug executable 'rustacene'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=rustacian",
-                    "--package=rustacian"
+                    "--bin=rustacene",
+                    "--package=rustacene"
                 ],
                 "filter": {
-                    "name": "rustacian",
+                    "name": "rustacene",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'rustacian'",
+            "name": "Debug unit tests in executable 'rustacene'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=rustacian",
-                    "--package=rustacian"
+                    "--bin=rustacene",
+                    "--package=rustacene"
                 ],
                 "filter": {
-                    "name": "rustacian",
+                    "name": "rustacene",
                     "kind": "bin"
                 }
             },
