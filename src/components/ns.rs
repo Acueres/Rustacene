@@ -1,43 +1,29 @@
 use super::*;
 use bevy::prelude::Component;
-use bevy::utils::HashMap;
-use petgraph::graph::Graph;
 use petgraph::graph::NodeIndex;
+use petgraph::stable_graph::StableGraph;
+use petgraph::visit::DfsPostOrder;
+use petgraph::visit::Reversed;
 use petgraph::Direction;
 use rand::prelude::SliceRandom;
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 
 pub const NS_ENERGY_COST: f32 = 1e-6;
-
-#[derive(Copy, Clone)]
-struct NodeConnection {
-    pub incoming: usize,
-    pub outgoing: usize,
-    pub weight: f32,
-}
-
-impl NodeConnection {
-    pub fn new(incoming: usize, outgoing: usize, weight: f32) -> Self {
-        Self {
-            incoming,
-            outgoing,
-            weight,
-        }
-    }
-}
 
 #[derive(Component, Clone)]
 
 pub struct NeuralSystem {
     ns_shape: NsShape,
-    nodes: Vec<NodeConnection>,
-    weights: HashMap<usize, f32>,
+    nn_graph: StableGraph<f32, f32>,
+    nodes: Vec<usize>,
     sources: HashSet<usize>,
+    self_connected: HashSet<usize>,
 }
 
 impl NeuralSystem {
     pub fn new(connections: &Vec<Connection>, ns_shape: NsShape) -> Self {
-        let mut nn_graph = Graph::<f32, f32>::with_capacity(ns_shape.n_neurons, connections.len());
+        let mut nn_graph =
+            StableGraph::<f32, f32>::with_capacity(ns_shape.n_neurons, connections.len());
 
         for _ in 0..ns_shape.n_neurons {
             nn_graph.add_node(0.);
@@ -47,78 +33,71 @@ impl NeuralSystem {
             nn_graph.add_edge(NodeIndex::new(c.in_index), NodeIndex::new(c.out_index), c.w);
         }
 
+        let reversed_graph = Reversed(&nn_graph);
         let out_start = ns_shape.input + ns_shape.hidden;
-        let mut nodes = Vec::<NodeConnection>::new();
-        let mut nodes_queue = VecDeque::<usize>::from_iter(out_start..ns_shape.n_neurons);
-        let mut connected = HashSet::<usize>::from_iter(0..ns_shape.input);
-        connected.extend(out_start..ns_shape.n_neurons);
+        let mut visited = HashSet::<usize>::new();
+        let mut nodes = Vec::<usize>::new();
 
-        while nodes_queue.len() > 0 {
-            let index = nodes_queue.pop_front().unwrap();
-            let neighbors = nn_graph.neighbors_directed(NodeIndex::new(index), Direction::Incoming);
-            let mut walk = neighbors.detach();
-            let n_incoming = neighbors.count();
+        for index in out_start..ns_shape.n_neurons {
+            let index = NodeIndex::new(index);
 
-            if n_incoming == 0 {
-                continue;
-            }
+            let mut dfs = DfsPostOrder::new(&reversed_graph, index);
 
-            let mut incoming = Vec::<NodeConnection>::with_capacity(n_incoming);
-
-            while let Some((edge, node)) = walk.next(&nn_graph) {
-                let weight = *nn_graph.edge_weight(edge).unwrap();
-                incoming.push(NodeConnection::new(node.index(), index, weight));
-                if connected.insert(node.index()) {
-                    nodes_queue.push_back(node.index());
+            while let Some(node) = dfs.next(&reversed_graph) {
+                if visited.insert(node.index()) {
+                    nodes.push(node.index());
                 }
             }
-            nodes = [nodes, incoming].concat();
         }
 
-        nodes.reverse();
+        let nodes_to_remove = &HashSet::<usize>::from_iter(0..ns_shape.n_neurons)
+            - &HashSet::<usize>::from_iter(nodes.iter().cloned());
+        let nodes_to_remove = &nodes_to_remove - &HashSet::<usize>::from_iter(0..ns_shape.input);
+
+        for index in nodes_to_remove.into_iter() {
+            nn_graph.remove_node(NodeIndex::new(index));
+        }
 
         let mut sources = HashSet::<usize>::from_iter(0..ns_shape.input);
-        let output = HashSet::<usize>::from_iter(out_start..ns_shape.n_neurons);
-        let hidden = &(&connected - &sources) - &output;
+        let mut self_connected = HashSet::<usize>::new();
 
-        for node in connected.iter() {
-            let neighbors = nn_graph.neighbors_directed(NodeIndex::new(*node), Direction::Incoming);
+        for index in nodes.iter() {
+            let neighbors =
+                nn_graph.neighbors_directed(NodeIndex::new(*index), Direction::Incoming);
             let mut walk = neighbors.detach();
             let n_incoming = neighbors.count();
 
-            if !hidden.contains(&node) {
+            if n_incoming == 0 {
+                sources.insert(*index);
                 continue;
             }
-            if n_incoming == 0 {
-                sources.insert(*node);
-            } else {
-                let mut self_connected = true;
-                while let Some((_, node_index)) = walk.next(&nn_graph) {
-                    if node_index.index() != *node {
-                        self_connected = false;
-                        break;
-                    }
-                }
 
-                if self_connected {
-                    sources.insert(*node);
+            let mut node_self_connected = true;
+            while let Some((_, node)) = walk.next(&nn_graph) {
+                if node.index() != *index {
+                    node_self_connected = false;
                 }
             }
-        }
 
-        let mut weights =
-            HashMap::<usize, f32>::from_iter(connected.iter().map(|node| (*node, 0.)));
+            if node_self_connected {
+                self_connected.insert(*index);
+                sources.insert(*index);
+            }
+        }
 
         // init sources
         for source_index in sources.iter() {
-            weights.entry(*source_index).and_modify(|f| *f = 0.5);
+            *nn_graph
+                .node_weight_mut(NodeIndex::new(*source_index))
+                .unwrap() = 0.5;
         }
 
         Self {
-            nodes,
             ns_shape,
-            weights,
+            nn_graph,
+            nodes,
             sources,
+            self_connected,
         }
     }
 
@@ -143,57 +122,72 @@ impl NeuralSystem {
     pub fn forward(&mut self, input: &Vec<f32>) -> Vec<f32> {
         //set inputs
         for input_index in 0..self.ns_shape.input {
-            self.weights
-                .entry(input_index)
-                .and_modify(|f| *f = input[input_index]);
+            *self
+                .nn_graph
+                .node_weight_mut(NodeIndex::new(input_index))
+                .unwrap() = input[input_index];
         }
-        let mut activated_nodes = HashMap::<usize, bool>::from_iter(
-            self.weights
-                .iter()
-                .map(|(k, _)| (*k, (0..self.ns_shape.input).contains(k))),
-        );
 
-        let previous_weights = self.weights.clone();
+        let hidden_range = self.ns_shape.input..self.ns_shape.input + self.ns_shape.hidden;
 
-        for conn in self.nodes.iter() {
-            let self_connected = conn.incoming == conn.outgoing;
-            let activated = *activated_nodes.get(&conn.incoming).unwrap() || self_connected;
-            let mut weight = if self_connected {
-                *previous_weights.get(&conn.incoming).unwrap()
-            } else {
-                *self.weights.get(&conn.incoming).unwrap()
-            };
-            if !activated {
-                weight = weight.tanh();
+        for index in self.nodes.iter() {
+            let node = NodeIndex::new(*index);
 
-                self.weights
-                    .entry(conn.incoming)
-                    .and_modify(|f| *f = weight);
+            let mut node_weight = *self.nn_graph.node_weight(node).unwrap();
 
-                activated_nodes
-                    .entry(conn.incoming)
-                    .and_modify(|v| *v = true);
+            if hidden_range.contains(index) && !self.sources.contains(index) {
+                node_weight = node_weight.tanh();
+                *self.nn_graph.node_weight_mut(node).unwrap() = node_weight;
             }
 
-            self.weights
-                .entry(conn.outgoing)
-                .and_modify(|f| *f += weight * conn.weight);
+            let neighbors = self.nn_graph.neighbors_directed(node, Direction::Outgoing);
+
+            if self.self_connected.contains(index) {
+                let mut walk = neighbors.detach();
+                let n_outgoing = neighbors.count();
+                let mut outgoing = Vec::<(NodeIndex, f32)>::with_capacity(n_outgoing);
+
+                while let Some((edge, next_node)) = walk.next(&self.nn_graph) {
+                    let edge_weight = *self.nn_graph.edge_weight(edge).unwrap();
+                    outgoing.push((next_node, edge_weight));
+                }
+
+                let (self_out, other_conns): (Vec<(NodeIndex, f32)>, Vec<(NodeIndex, f32)>) =
+                    outgoing.into_iter().partition(|x| x.0.index() == *index);
+
+                //propagate to self
+                for conn in self_out.into_iter() {
+                    *self.nn_graph.node_weight_mut(node).unwrap() += conn.1 * node_weight;
+                }
+
+                //activate self-connected
+                let activated_node_weight = (*self.nn_graph.node_weight(node).unwrap()).tanh();
+                *self.nn_graph.node_weight_mut(node).unwrap() = activated_node_weight;
+
+                //propagate to others
+                for conn in other_conns.into_iter() {
+                    *self.nn_graph.node_weight_mut(conn.0).unwrap() +=
+                        conn.1 * activated_node_weight;
+                }
+            } else {
+                let mut walk = neighbors.detach();
+                while let Some((edge, next_node)) = walk.next(&self.nn_graph) {
+                    let edge_weight = *self.nn_graph.edge_weight(edge).unwrap();
+                    *self.nn_graph.node_weight_mut(next_node).unwrap() += edge_weight * node_weight;
+                }
+            }
         }
 
         let out_start = self.ns_shape.input + self.ns_shape.hidden;
         let out_end = out_start + self.ns_shape.output;
 
-        let mut res = vec![0.0f32; self.ns_shape.output];
-        for node in out_start..out_end {
-            let weight = *self.weights.get(&node).unwrap();
-            res[node - out_start] = weight;
-        }
-
-        let nodes_to_clear = &HashSet::<usize>::from_iter(self.weights.keys().map(|node| *node))
-            - &HashSet::<usize>::from_iter(self.sources.iter().cloned());
-
-        for node in nodes_to_clear {
-            self.weights.entry(node).and_modify(|f| *f = 0.);
+        //get outputs
+        let mut res = vec![0.; self.ns_shape.output];
+        for index in out_start..out_end {
+            let node = NodeIndex::new(index);
+            let weight = *self.nn_graph.node_weight(node).unwrap();
+            res[index - out_start] = weight;
+            *self.nn_graph.node_weight_mut(node).unwrap() = 0.;
         }
 
         softmax(&res)
@@ -225,7 +219,7 @@ mod tests {
 
         let mut ns = NeuralSystem::new(&connections, ns_shape);
 
-        assert_eq!(ns.weights.iter().len(), 5);
+        assert_eq!(ns.nn_graph.node_count(), 5);
         assert_eq!(ns.sources, HashSet::<usize>::from_iter(vec![0, 1, 2]));
 
         let input = vec![0.5, 0.8];
@@ -257,7 +251,7 @@ mod tests {
         assert_eq!(2, ns.sources.len());
 
         let input = vec![0.8];
-        let weight_node_1: f32 = (0.5_f32.tanh() as f32 * 0.4).tanh();
+        let weight_node_1: f32 = (0.5 as f32 * 0.4).tanh();
         let weight_node_0: f32 = (weight_node_1 * 0.6 + input[0]).tanh();
         let expected_output = *softmax(&vec![weight_node_0 * 0.5]).first().unwrap();
 
@@ -300,7 +294,7 @@ mod tests {
     }
 
     #[test]
-    fn test_pruning_complex() {
+    fn test_sources_and_pruning() {
         let ns_shape = NsShape::new(4, 4, 2);
 
         let mut connections = vec![
@@ -332,8 +326,8 @@ mod tests {
         );
 
         //test pruning
-        assert_eq!(ns_shape.n_neurons - 1, ns.weights.len());
-        assert_eq!(connections.len() - 1, ns.nodes.len());
+        assert_eq!(ns_shape.n_neurons - 1, ns.nn_graph.node_count());
+        assert_eq!(connections.len() - 1, ns.nn_graph.edge_count());
     }
 
     #[inline]

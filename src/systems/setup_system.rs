@@ -29,9 +29,9 @@ pub fn setup_sim(
         grid_size,
         n_initial_entities: 100,
         n_max_entities: 500,
-        genome_len: 30,
-        ns_shape: NsShape::new(N_SENSORS, 15, N_ACTIONS),
-        average_lifespan: 10,
+        genome_len: 10,
+        ns_shape: NsShape::new(N_SENSORS, 5, N_ACTIONS),
+        average_lifespan: 7,
         cell_height,
         cell_width,
     };
