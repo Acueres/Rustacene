@@ -6,7 +6,7 @@ use petgraph::visit::DfsPostOrder;
 use petgraph::visit::Reversed;
 use petgraph::Direction;
 use rand::prelude::SliceRandom;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 pub const NS_ENERGY_COST: f32 = 1e-6;
 
@@ -72,15 +72,20 @@ impl NeuralSystem {
                 continue;
             }
 
-            let mut node_self_connected = true;
-            while let Some((_, node)) = walk.next(&nn_graph) {
-                if node.index() != *index {
-                    node_self_connected = false;
-                }
+            let mut incoming = Vec::<usize>::with_capacity(n_incoming);
+            while let Some(node) = walk.next_node(&nn_graph) {
+                incoming.push(node.index());
             }
 
-            if node_self_connected {
+            let n_self = incoming
+                .iter()
+                .fold(0, |acc, n| if n == index { acc + 1 } else { acc });
+
+            if n_self > 0 {
                 self_connected.insert(*index);
+            }
+
+            if n_self == incoming.len() {
                 sources.insert(*index);
             }
         }
@@ -128,6 +133,13 @@ impl NeuralSystem {
                 .unwrap() = input[input_index];
         }
 
+        let mut self_connected_weights =
+            HashMap::<usize, f32>::with_capacity(self.self_connected.len());
+        for index in self.self_connected.iter() {
+            let w = *self.nn_graph.node_weight(NodeIndex::new(*index)).unwrap();
+            self_connected_weights.insert(*index, w);
+        }
+
         let hidden_range = self.ns_shape.input..self.ns_shape.input + self.ns_shape.hidden;
 
         for index in self.nodes.iter() {
@@ -135,7 +147,10 @@ impl NeuralSystem {
 
             let mut node_weight = *self.nn_graph.node_weight(node).unwrap();
 
-            if hidden_range.contains(index) && !self.sources.contains(index) {
+            if hidden_range.contains(index)
+                && !self.self_connected.contains(index)
+                && !self.sources.contains(index)
+            {
                 node_weight = node_weight.tanh();
                 *self.nn_graph.node_weight_mut(node).unwrap() = node_weight;
             }
@@ -146,6 +161,7 @@ impl NeuralSystem {
                 let mut walk = neighbors.detach();
                 let n_outgoing = neighbors.count();
                 let mut outgoing = Vec::<(NodeIndex, f32)>::with_capacity(n_outgoing);
+                let self_connected_weight = *self_connected_weights.get(index).unwrap();
 
                 while let Some((edge, next_node)) = walk.next(&self.nn_graph) {
                     let edge_weight = *self.nn_graph.edge_weight(edge).unwrap();
@@ -157,7 +173,7 @@ impl NeuralSystem {
 
                 //propagate to self
                 for conn in self_out.into_iter() {
-                    *self.nn_graph.node_weight_mut(node).unwrap() += conn.1 * node_weight;
+                    *self.nn_graph.node_weight_mut(node).unwrap() += conn.1 * self_connected_weight;
                 }
 
                 //activate self-connected
@@ -236,7 +252,7 @@ mod tests {
     }
 
     #[test]
-    fn test_output_concurrency() {
+    fn test_output_node_ordering() {
         let ns_shape = NsShape::new(1, 3, 1);
 
         let mut connections = vec![
@@ -264,7 +280,7 @@ mod tests {
     }
 
     #[test]
-    fn test_self_connected() {
+    fn test_self_connected_source() {
         let ns_shape = NsShape::new(1, 1, 1);
 
         let connections = vec![
@@ -285,6 +301,43 @@ mod tests {
         let expected_output = *softmax(&vec![weight * 0.2]).first().unwrap();
 
         let input = vec![0.];
+        let actual_output = *ns.forward(&input).first().unwrap();
+
+        assert_eq!(
+            (actual_output * 1e9) as usize,
+            (expected_output * 1e9) as usize
+        );
+    }
+
+    #[test]
+    fn test_self_connected() {
+        let ns_shape = NsShape::new(2, 1, 1);
+
+        let connections = vec![
+            renumber_conn_indexes(&Connection::new(1.2, true, false, 0, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(0.9, true, false, 1, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(0.7, false, false, 0, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(1., false, false, 0, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(0.3, false, false, 0, 0), &ns_shape),
+            renumber_conn_indexes(&Connection::new(0.2, false, true, 0, 0), &ns_shape),
+        ];
+
+        let mut ns = NeuralSystem::new(&connections, ns_shape);
+        //set a weight to self-connected node
+        *ns.nn_graph.node_weight_mut(NodeIndex::new(2)).unwrap() = 0.74;
+
+        let input = vec![0.9, 0.4];
+        let mut weight: f32 = 0.74;
+        //self-connected
+        weight += 0.74 * 0.7;
+        weight += 0.74 * 1.;
+        weight += 0.74 * 0.3;
+        //other
+        weight += input[0] * 1.2;
+        weight += input[1] * 0.9;
+        weight = weight.tanh();
+        let expected_output = *softmax(&vec![weight * 0.2]).first().unwrap();
+
         let actual_output = *ns.forward(&input).first().unwrap();
 
         assert_eq!(
