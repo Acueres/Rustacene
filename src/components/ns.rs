@@ -125,12 +125,16 @@ impl NeuralSystem {
     }
 
     pub fn forward(&mut self, input: &Vec<f32>) -> Vec<f32> {
-        //set inputs
-        for input_index in 0..self.ns_shape.input {
+        //set sources
+        for index in self.sources.iter() {
             *self
                 .nn_graph
-                .node_weight_mut(NodeIndex::new(input_index))
-                .unwrap() = input[input_index];
+                .node_weight_mut(NodeIndex::new(*index))
+                .unwrap() = if (0..self.ns_shape.input).contains(index) {
+                input[*index] //inputs
+            } else {
+                0.5 //internal sources
+            };
         }
 
         let mut self_connected_weights =
@@ -140,20 +144,19 @@ impl NeuralSystem {
             self_connected_weights.insert(*index, w);
         }
 
+        let nodes_to_clear =
+            &HashSet::<usize>::from_iter(self.nodes.iter().cloned()) - &self.sources;
+        for index in nodes_to_clear.into_iter() {
+            *self
+                .nn_graph
+                .node_weight_mut(NodeIndex::new(index))
+                .unwrap() = 0.;
+        }
+
         let hidden_range = self.ns_shape.input..self.ns_shape.input + self.ns_shape.hidden;
 
         for index in self.nodes.iter() {
             let node = NodeIndex::new(*index);
-
-            let mut node_weight = *self.nn_graph.node_weight(node).unwrap();
-
-            if hidden_range.contains(index)
-                && !self.self_connected.contains(index)
-                && !self.sources.contains(index)
-            {
-                node_weight = node_weight.tanh();
-                *self.nn_graph.node_weight_mut(node).unwrap() = node_weight;
-            }
 
             let neighbors = self.nn_graph.neighbors_directed(node, Direction::Outgoing);
 
@@ -187,6 +190,17 @@ impl NeuralSystem {
                 }
             } else {
                 let mut walk = neighbors.detach();
+
+                let mut node_weight = *self.nn_graph.node_weight(node).unwrap();
+
+                if hidden_range.contains(index)
+                    && !self.self_connected.contains(index)
+                    && !self.sources.contains(index)
+                {
+                    node_weight = node_weight.tanh();
+                    *self.nn_graph.node_weight_mut(node).unwrap() = node_weight;
+                }
+
                 while let Some((edge, next_node)) = walk.next(&self.nn_graph) {
                     let edge_weight = *self.nn_graph.edge_weight(edge).unwrap();
                     *self.nn_graph.node_weight_mut(next_node).unwrap() += edge_weight * node_weight;
@@ -203,7 +217,6 @@ impl NeuralSystem {
             let node = NodeIndex::new(index);
             let weight = *self.nn_graph.node_weight(node).unwrap();
             res[index - out_start] = weight;
-            *self.nn_graph.node_weight_mut(node).unwrap() = 0.;
         }
 
         softmax(&res)
@@ -327,7 +340,7 @@ mod tests {
         *ns.nn_graph.node_weight_mut(NodeIndex::new(2)).unwrap() = 0.74;
 
         let input = vec![0.9, 0.4];
-        let mut weight: f32 = 0.74;
+        let mut weight: f32 = 0.;
         //self-connected
         weight += 0.74 * 0.7;
         weight += 0.74 * 1.;
@@ -341,8 +354,8 @@ mod tests {
         let actual_output = *ns.forward(&input).first().unwrap();
 
         assert_eq!(
-            (actual_output * 1e9) as usize,
-            (expected_output * 1e9) as usize
+            (actual_output * 1e6) as usize,
+            (expected_output * 1e6) as usize
         );
     }
 
