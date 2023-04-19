@@ -32,31 +32,38 @@ pub struct Gene(pub i32);
 
 impl Gene {
     /**Get float from 15-bit weight value*/
+    #[inline]
     pub fn get_weightf(self) -> f32 {
-        return (self.0 & 0x7fff) as f32 / (i16::MAX / 4) as f32;
+        let w = self.get_weight() - 0x4000;
+        return w as f32 / (i16::MAX / 4) as f32;
     }
 
     /**Get 15-bit weight value*/
+    #[inline]
     pub fn get_weight(self) -> i32 {
         return (self.0 & 0x7fff) as i32;
     }
 
     /**Get 7-bit output index*/
+    #[inline]
     pub fn get_out_index(self) -> usize {
         return ((self.0 >> 15) & 0x7f) as usize;
     }
 
     /**Get 7-bit input index*/
+    #[inline]
     pub fn get_in_index(self) -> usize {
         return ((self.0 >> 22) & 0x7f) as usize;
     }
 
     /**Get 1-bit output type: 1 - sensor, 0 - neuron*/
+    #[inline]
     pub fn get_out_type(self) -> usize {
         return ((self.0 >> 29) & 1) as usize;
     }
 
     /**Get 1-bit input type: 1 - sensor, 0 - neuron*/
+    #[inline]
     pub fn get_in_type(self) -> usize {
         return ((self.0 >> 30) & 1) as usize;
     }

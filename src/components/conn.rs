@@ -39,7 +39,6 @@ impl Connection {
             } else {
                 ns_shape.hidden
             };
-        let in_index = renumber_in_index(in_index, sensor_in, ns_shape.input);
 
         let out_index = gene.get_out_index()
             % if sensor_out {
@@ -47,14 +46,21 @@ impl Connection {
             } else {
                 ns_shape.hidden
             };
+
+        Connection::new(w, sensor_in, sensor_out, in_index, out_index).renumber(&ns_shape)
+    }
+
+    #[inline]
+    pub fn renumber(self, ns_shape: &NsShape) -> Self {
+        let in_index = renumber_in_index(self.in_index, self.sensor_in, ns_shape.input);
         let out_index = renumber_out_index(
-            out_index,
-            sensor_out,
+            self.out_index,
+            self.sensor_out,
             ns_shape.input,
             ns_shape.input + ns_shape.hidden,
         );
 
-        Connection::new(w, sensor_in, sensor_out, in_index, out_index)
+        Connection::new(self.w, self.sensor_in, self.sensor_out, in_index, out_index)
     }
 }
 

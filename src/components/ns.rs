@@ -113,7 +113,7 @@ impl NeuralSystem {
             .forward(&input)
             .iter()
             .enumerate()
-            .map(|(i, p)| (i, p.to_owned()))
+            .map(|(i, p)| (i, if p.is_sign_negative() { 0. } else { *p }))
             .collect();
 
         let action_index = probas
@@ -153,8 +153,6 @@ impl NeuralSystem {
                 .unwrap() = 0.;
         }
 
-        let hidden_range = self.ns_shape.input..self.ns_shape.input + self.ns_shape.hidden;
-
         for index in self.nodes.iter() {
             let node = NodeIndex::new(*index);
 
@@ -193,10 +191,7 @@ impl NeuralSystem {
 
                 let mut node_weight = *self.nn_graph.node_weight(node).unwrap();
 
-                if hidden_range.contains(index)
-                    && !self.self_connected.contains(index)
-                    && !self.sources.contains(index)
-                {
+                if !self.sources.contains(index) {
                     node_weight = node_weight.tanh();
                     *self.nn_graph.node_weight_mut(node).unwrap() = node_weight;
                 }
@@ -214,20 +209,13 @@ impl NeuralSystem {
         //get outputs
         let mut res = vec![0.; self.ns_shape.output];
         for index in out_start..out_end {
-            let node = NodeIndex::new(index);
-            let weight = *self.nn_graph.node_weight(node).unwrap();
+            let weight = *self.nn_graph.node_weight(NodeIndex::new(index)).unwrap();
             res[index - out_start] = weight;
         }
 
-        softmax(&res)
+        res
+        //softmax(&res)
     }
-}
-
-#[inline]
-fn softmax(input: &Vec<f32>) -> Vec<f32> {
-    let exp: Vec<f32> = input.iter().map(|v| v.exp()).collect();
-    let sum: f32 = exp.iter().sum();
-    input.iter().map(|v| v / sum).collect()
 }
 
 #[cfg(test)]
@@ -240,10 +228,10 @@ mod tests {
         let ns_shape = NsShape::new(3, 2, 1);
 
         let connections = vec![
-            renumber_conn_indexes(&Connection::new(1., true, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(1., true, false, 1, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.3, false, true, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.3, true, false, 2, 1), &ns_shape),
+            Connection::new(1., true, false, 0, 0).renumber(&ns_shape),
+            Connection::new(1., true, false, 1, 0).renumber(&ns_shape),
+            Connection::new(0.3, false, true, 0, 0).renumber(&ns_shape),
+            Connection::new(0.3, true, false, 2, 1).renumber(&ns_shape),
         ];
 
         let mut ns = NeuralSystem::new(&connections, ns_shape);
@@ -253,7 +241,7 @@ mod tests {
 
         let input = vec![0.5, 0.8];
         let out_inner = input.iter().sum::<f32>().tanh();
-        let expected_output = *softmax(&vec![out_inner * 0.3]).first().unwrap();
+        let expected_output = (out_inner * 0.3).tanh();
 
         let input = vec![0.5, 0.8, 1.]; // last value should not affect the output
         let actual_output = *ns.forward(&input).first().unwrap();
@@ -269,10 +257,10 @@ mod tests {
         let ns_shape = NsShape::new(1, 3, 1);
 
         let mut connections = vec![
-            renumber_conn_indexes(&Connection::new(1., true, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.6, false, false, 1, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.4, false, false, 2, 1), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.5, false, true, 0, 0), &ns_shape),
+            Connection::new(1., true, false, 0, 0).renumber(&ns_shape),
+            Connection::new(0.6, false, false, 1, 0).renumber(&ns_shape),
+            Connection::new(0.4, false, false, 2, 1).renumber(&ns_shape),
+            Connection::new(0.5, false, true, 0, 0).renumber(&ns_shape),
         ];
         connections.shuffle(&mut rand::thread_rng());
 
@@ -282,7 +270,7 @@ mod tests {
         let input = vec![0.8];
         let weight_node_1: f32 = (0.5 as f32 * 0.4).tanh();
         let weight_node_0: f32 = (weight_node_1 * 0.6 + input[0]).tanh();
-        let expected_output = *softmax(&vec![weight_node_0 * 0.5]).first().unwrap();
+        let expected_output = (weight_node_0 * 0.5).tanh();
 
         let actual_output = *ns.forward(&input).first().unwrap();
 
@@ -297,10 +285,10 @@ mod tests {
         let ns_shape = NsShape::new(1, 1, 1);
 
         let connections = vec![
-            renumber_conn_indexes(&Connection::new(0.7, false, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(1., false, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.3, false, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.2, false, true, 0, 0), &ns_shape),
+            Connection::new(0.7, false, false, 0, 0).renumber(&ns_shape),
+            Connection::new(1., false, false, 0, 0).renumber(&ns_shape),
+            Connection::new(0.3, false, false, 0, 0).renumber(&ns_shape),
+            Connection::new(0.2, false, true, 0, 0).renumber(&ns_shape),
         ];
 
         let mut ns = NeuralSystem::new(&connections, ns_shape);
@@ -311,7 +299,7 @@ mod tests {
         weight += 0.5 * 1.;
         weight += 0.5 * 0.3;
         weight = weight.tanh();
-        let expected_output = *softmax(&vec![weight * 0.2]).first().unwrap();
+        let expected_output = (weight * 0.2).tanh();
 
         let input = vec![0.];
         let actual_output = *ns.forward(&input).first().unwrap();
@@ -327,12 +315,12 @@ mod tests {
         let ns_shape = NsShape::new(2, 1, 1);
 
         let connections = vec![
-            renumber_conn_indexes(&Connection::new(1.2, true, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.9, true, false, 1, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.7, false, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(1., false, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.3, false, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(0.2, false, true, 0, 0), &ns_shape),
+            Connection::new(1.2, true, false, 0, 0).renumber(&ns_shape),
+            Connection::new(0.9, true, false, 1, 0).renumber(&ns_shape),
+            Connection::new(0.7, false, false, 0, 0).renumber(&ns_shape),
+            Connection::new(1., false, false, 0, 0).renumber(&ns_shape),
+            Connection::new(0.3, false, false, 0, 0).renumber(&ns_shape),
+            Connection::new(0.2, false, true, 0, 0).renumber(&ns_shape),
         ];
 
         let mut ns = NeuralSystem::new(&connections, ns_shape);
@@ -349,7 +337,7 @@ mod tests {
         weight += input[0] * 1.2;
         weight += input[1] * 0.9;
         weight = weight.tanh();
-        let expected_output = *softmax(&vec![weight * 0.2]).first().unwrap();
+        let expected_output = (weight * 0.2).tanh();
 
         let actual_output = *ns.forward(&input).first().unwrap();
 
@@ -365,20 +353,20 @@ mod tests {
 
         let mut connections = vec![
             //input to internal
-            renumber_conn_indexes(&Connection::new(1., true, false, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(1., true, false, 1, 0), &ns_shape),
+            Connection::new(1., true, false, 0, 0).renumber(&ns_shape),
+            Connection::new(1., true, false, 1, 0).renumber(&ns_shape),
             //input to output
-            renumber_conn_indexes(&Connection::new(1., true, true, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(1., true, true, 2, 0), &ns_shape),
+            Connection::new(1., true, true, 0, 0).renumber(&ns_shape),
+            Connection::new(1., true, true, 2, 0).renumber(&ns_shape),
             //self-connected
-            renumber_conn_indexes(&Connection::new(1., false, false, 1, 1), &ns_shape),
+            Connection::new(1., false, false, 1, 1).renumber(&ns_shape),
             //internal to internal
-            renumber_conn_indexes(&Connection::new(1., false, false, 1, 0), &ns_shape),
+            Connection::new(1., false, false, 1, 0).renumber(&ns_shape),
             //internal to output
-            renumber_conn_indexes(&Connection::new(1., false, true, 0, 0), &ns_shape),
-            renumber_conn_indexes(&Connection::new(1., false, true, 2, 1), &ns_shape),
+            Connection::new(1., false, true, 0, 0).renumber(&ns_shape),
+            Connection::new(1., false, true, 2, 1).renumber(&ns_shape),
             //input to internal unconnected
-            renumber_conn_indexes(&Connection::new(1., true, false, 3, 3), &ns_shape),
+            Connection::new(1., true, false, 3, 3).renumber(&ns_shape),
         ];
         //ensure connections ordering doesn't matter
         connections.shuffle(&mut rand::thread_rng());
@@ -394,34 +382,5 @@ mod tests {
         //test pruning
         assert_eq!(ns_shape.n_neurons - 1, ns.nn_graph.node_count());
         assert_eq!(connections.len() - 1, ns.nn_graph.edge_count());
-    }
-
-    #[inline]
-    fn renumber_conn_indexes(conn: &Connection, ns_shape: &NsShape) -> Connection {
-        let in_index = renumber_in_index(conn.in_index, conn.sensor_in, ns_shape.input);
-        let out_index = renumber_out_index(
-            conn.out_index,
-            conn.sensor_out,
-            ns_shape.input,
-            ns_shape.input + ns_shape.hidden,
-        );
-
-        Connection::new(conn.w, conn.sensor_in, conn.sensor_out, in_index, out_index)
-    }
-
-    #[inline]
-    fn renumber_in_index(index: usize, condition: bool, offset: usize) -> usize {
-        if condition {
-            return index;
-        }
-        index + offset
-    }
-
-    #[inline]
-    fn renumber_out_index(index: usize, condition: bool, offset1: usize, offset2: usize) -> usize {
-        if condition {
-            return index + offset2;
-        }
-        index + offset1
     }
 }
