@@ -10,7 +10,7 @@ impl Plugin for SimPlugin {
             timer: Timer::from_seconds(0.05, TimerMode::Repeating),
         })
         .insert_resource(EpochTime {
-            timer: Timer::from_seconds(5., TimerMode::Repeating),
+            timer: Timer::from_seconds(10., TimerMode::Repeating),
         })
         .insert_resource(SimState {
             paused: false,

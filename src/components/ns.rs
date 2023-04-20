@@ -228,10 +228,10 @@ mod tests {
         let ns_shape = NsShape::new(3, 2, 1);
 
         let connections = vec![
-            Connection::new(1., true, false, 0, 0).renumber(&ns_shape),
-            Connection::new(1., true, false, 1, 0).renumber(&ns_shape),
-            Connection::new(0.3, false, true, 0, 0).renumber(&ns_shape),
-            Connection::new(0.3, true, false, 2, 1).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::In, 0, 0).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::In, 1, 0).renumber(&ns_shape),
+            Connection::new(0.3, ConnectionType::Out, 0, 0).renumber(&ns_shape),
+            Connection::new(0.3, ConnectionType::In, 2, 1).renumber(&ns_shape),
         ];
 
         let mut ns = NeuralSystem::new(&connections, ns_shape);
@@ -257,10 +257,10 @@ mod tests {
         let ns_shape = NsShape::new(1, 3, 1);
 
         let mut connections = vec![
-            Connection::new(1., true, false, 0, 0).renumber(&ns_shape),
-            Connection::new(0.6, false, false, 1, 0).renumber(&ns_shape),
-            Connection::new(0.4, false, false, 2, 1).renumber(&ns_shape),
-            Connection::new(0.5, false, true, 0, 0).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::In, 0, 0).renumber(&ns_shape),
+            Connection::new(0.6, ConnectionType::Internal, 1, 0).renumber(&ns_shape),
+            Connection::new(0.4, ConnectionType::Internal, 2, 1).renumber(&ns_shape),
+            Connection::new(0.5, ConnectionType::Out, 0, 0).renumber(&ns_shape),
         ];
         connections.shuffle(&mut rand::thread_rng());
 
@@ -285,10 +285,10 @@ mod tests {
         let ns_shape = NsShape::new(1, 1, 1);
 
         let connections = vec![
-            Connection::new(0.7, false, false, 0, 0).renumber(&ns_shape),
-            Connection::new(1., false, false, 0, 0).renumber(&ns_shape),
-            Connection::new(0.3, false, false, 0, 0).renumber(&ns_shape),
-            Connection::new(0.2, false, true, 0, 0).renumber(&ns_shape),
+            Connection::new(0.7, ConnectionType::Internal, 0, 0).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::Internal, 0, 0).renumber(&ns_shape),
+            Connection::new(0.3, ConnectionType::Internal, 0, 0).renumber(&ns_shape),
+            Connection::new(0.2, ConnectionType::Out, 0, 0).renumber(&ns_shape),
         ];
 
         let mut ns = NeuralSystem::new(&connections, ns_shape);
@@ -315,12 +315,12 @@ mod tests {
         let ns_shape = NsShape::new(2, 1, 1);
 
         let connections = vec![
-            Connection::new(1.2, true, false, 0, 0).renumber(&ns_shape),
-            Connection::new(0.9, true, false, 1, 0).renumber(&ns_shape),
-            Connection::new(0.7, false, false, 0, 0).renumber(&ns_shape),
-            Connection::new(1., false, false, 0, 0).renumber(&ns_shape),
-            Connection::new(0.3, false, false, 0, 0).renumber(&ns_shape),
-            Connection::new(0.2, false, true, 0, 0).renumber(&ns_shape),
+            Connection::new(1.2, ConnectionType::In, 0, 0).renumber(&ns_shape),
+            Connection::new(0.9, ConnectionType::In, 1, 0).renumber(&ns_shape),
+            Connection::new(0.7, ConnectionType::Internal, 0, 0).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::Internal, 0, 0).renumber(&ns_shape),
+            Connection::new(0.3, ConnectionType::Internal, 0, 0).renumber(&ns_shape),
+            Connection::new(0.2, ConnectionType::Out, 0, 0).renumber(&ns_shape),
         ];
 
         let mut ns = NeuralSystem::new(&connections, ns_shape);
@@ -353,20 +353,20 @@ mod tests {
 
         let mut connections = vec![
             //input to internal
-            Connection::new(1., true, false, 0, 0).renumber(&ns_shape),
-            Connection::new(1., true, false, 1, 0).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::In, 0, 0).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::In, 1, 0).renumber(&ns_shape),
             //input to output
-            Connection::new(1., true, true, 0, 0).renumber(&ns_shape),
-            Connection::new(1., true, true, 2, 0).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::InOut, 0, 0).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::InOut, 2, 0).renumber(&ns_shape),
             //self-connected
-            Connection::new(1., false, false, 1, 1).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::Internal, 1, 1).renumber(&ns_shape),
             //internal to internal
-            Connection::new(1., false, false, 1, 0).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::Internal, 1, 0).renumber(&ns_shape),
             //internal to output
-            Connection::new(1., false, true, 0, 0).renumber(&ns_shape),
-            Connection::new(1., false, true, 2, 1).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::Out, 0, 0).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::Out, 2, 1).renumber(&ns_shape),
             //input to internal unconnected
-            Connection::new(1., true, false, 3, 3).renumber(&ns_shape),
+            Connection::new(1., ConnectionType::In, 3, 3).renumber(&ns_shape),
         ];
         //ensure connections ordering doesn't matter
         connections.shuffle(&mut rand::thread_rng());

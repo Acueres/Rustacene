@@ -2,26 +2,41 @@ use super::Gene;
 use super::NsShape;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
+pub enum ConnectionType {
+    Internal,
+    In,
+    Out,
+    InOut,
+}
+
+impl ConnectionType {
+    #[inline]
+    pub fn from_sensors(sensor_in: bool, sensor_out: bool) -> Self {
+        if sensor_in && sensor_out {
+            return ConnectionType::InOut;
+        } else if sensor_in {
+            return ConnectionType::In;
+        } else if sensor_out {
+            return ConnectionType::Out;
+        }
+
+        ConnectionType::Internal
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Connection {
     pub w: f32,
-    pub sensor_in: bool,
-    pub sensor_out: bool,
+    pub conn_type: ConnectionType,
     pub in_index: usize,
     pub out_index: usize,
 }
 
 impl Connection {
-    pub fn new(
-        w: f32,
-        sensor_in: bool,
-        sensor_out: bool,
-        in_index: usize,
-        out_index: usize,
-    ) -> Self {
+    pub fn new(w: f32, conn_type: ConnectionType, in_index: usize, out_index: usize) -> Self {
         Self {
             w,
-            sensor_in,
-            sensor_out,
+            conn_type,
             in_index,
             out_index,
         }
@@ -47,20 +62,26 @@ impl Connection {
                 ns_shape.hidden
             };
 
-        Connection::new(w, sensor_in, sensor_out, in_index, out_index).renumber(&ns_shape)
+        let conn_type = ConnectionType::from_sensors(sensor_in, sensor_out);
+
+        Connection::new(w, conn_type, in_index, out_index).renumber(&ns_shape)
     }
 
     #[inline]
     pub fn renumber(self, ns_shape: &NsShape) -> Self {
-        let in_index = renumber_in_index(self.in_index, self.sensor_in, ns_shape.input);
+        let in_index = renumber_in_index(
+            self.in_index,
+            self.conn_type == ConnectionType::In || self.conn_type == ConnectionType::InOut,
+            ns_shape.input,
+        );
         let out_index = renumber_out_index(
             self.out_index,
-            self.sensor_out,
+            self.conn_type == ConnectionType::Out || self.conn_type == ConnectionType::InOut,
             ns_shape.input,
             ns_shape.input + ns_shape.hidden,
         );
 
-        Connection::new(self.w, self.sensor_in, self.sensor_out, in_index, out_index)
+        Connection::new(self.w, self.conn_type, in_index, out_index)
     }
 }
 
@@ -88,9 +109,9 @@ mod tests {
     fn test_gene_to_conn() {
         let ns_shape = NsShape::new(2, 1, 1);
         let test_conns = vec![
-            Connection::new(1., true, false, 0, 2),
-            Connection::new(1., true, false, 1, 2),
-            Connection::new(1., false, true, 2, 3),
+            Connection::new(1., ConnectionType::In, 0, 2),
+            Connection::new(1., ConnectionType::In, 1, 2),
+            Connection::new(1., ConnectionType::Out, 2, 3),
         ];
 
         let genes = vec![
@@ -105,8 +126,7 @@ mod tests {
             .collect();
 
         for (conn, test_conn) in conns.iter().zip(test_conns.iter()) {
-            assert_eq!(test_conn.sensor_in, conn.sensor_in);
-            assert_eq!(test_conn.sensor_out, conn.sensor_out);
+            assert_eq!(test_conn.conn_type, conn.conn_type);
         }
     }
 }
