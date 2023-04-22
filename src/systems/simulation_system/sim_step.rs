@@ -3,15 +3,19 @@ use crate::components::{Action, Coord, Organism};
 use crate::resources::*;
 use crate::systems::*;
 use bevy::prelude::*;
+use rand::Rng;
 
-pub fn execute_actions(
+pub fn sim_step(
     mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
     time: Res<Time>,
     sim_state: Res<SimState>,
     params: Res<Parameters>,
     mut sim_time: ResMut<SimTime>,
     mut grid: ResMut<Grid>,
     mut orgs_query: Query<(
+        Entity,
         &mut Organism,
         &mut NeuralSystem,
         &mut Coord<isize>,
@@ -21,10 +25,23 @@ pub fn execute_actions(
     pellets_query: Query<(Entity, &Coord<isize>, With<Pellet>, Without<Organism>)>,
 ) {
     if !sim_state.paused && !sim_state.reset && sim_time.timer.tick(time.delta()).just_finished() {
+        let mut rng = rand::thread_rng();
+        let mut children = Vec::<(Organism, Coord<isize>)>::new();
         let mut pellets_to_remove = Vec::<Coord<isize>>::new();
 
-        for (mut org, mut ns, mut coord, mut curr_dir, mut transform) in orgs_query.iter_mut() {
-            if org.energy < 0. {
+        for (e, mut org, mut ns, mut coord, mut curr_dir, mut transform) in orgs_query.iter_mut() {
+            if org.energy.is_sign_negative() {
+                grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
+                spawn_pellet(
+                    &mut commands,
+                    &mut meshes,
+                    &mut materials,
+                    &coord,
+                    params.cell_width,
+                    params.cell_height,
+                );
+
+                commands.entity(e).despawn();
                 continue;
             }
 
@@ -81,14 +98,44 @@ pub fn execute_actions(
             );
 
             *coord = next_coord;
+
+            if org.energy > 0.25 {
+                let child = org.replicate(0.05);
+                children.push((child, *coord));
+            }
         }
 
         while let Some(pellet_coord) = pellets_to_remove.pop() {
-            for (e, coord, _, _) in &pellets_query {
+            for (e, coord, _, _) in pellets_query.iter() {
                 if *coord == pellet_coord {
                     commands.entity(e).despawn_recursive();
                 }
             }
+        }
+
+        for (child, parent_coord) in children.into_iter() {
+            let nearby_coords = grid.clone().search_area(parent_coord, 1, CellType::Empty);
+
+            if nearby_coords.len() == 0 {
+                continue;
+            }
+
+            let child_coord = nearby_coords[rng.gen_range(0..nearby_coords.len())];
+
+            grid.set(
+                child_coord.x as usize,
+                child_coord.y as usize,
+                CellType::Impassable,
+            );
+
+            spawn_organism(
+                &mut commands,
+                &mut meshes,
+                &mut materials,
+                &child,
+                &child_coord,
+                &params,
+            );
         }
     }
 }

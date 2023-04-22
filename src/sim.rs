@@ -19,7 +19,7 @@ impl Plugin for SimPlugin {
         })
         .add_startup_system(setup_sim)
         .add_system(handle_input)
-        .add_system(execute_actions)
+        .add_system(sim_step)
         .add_system(advance_epoch)
         .add_system(reset_world)
         .add_system(center_camera)
