@@ -5,23 +5,28 @@ use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
-pub fn setup_sim(
+pub fn startup_system(
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+    let mut window = window_query.get_single_mut().unwrap();
+    window.resizable = false;
+
     commands.spawn(Camera2dBundle {
         camera_2d: Camera2d {
             clear_color: ClearColorConfig::Custom(Color::MIDNIGHT_BLUE),
         },
+        transform: Transform::from_translation(Vec3::new(
+            window.width() / 2.,
+            window.height() / 2.,
+            0.,
+        )),
         ..Default::default()
     });
 
-    let mut window = window_query.get_single_mut().unwrap();
-    window.resizable = false;
-
-    let grid_size: usize = 300;
+    let grid_size: usize = 500;
     let cell_width = window.width() / grid_size as f32;
     let cell_height = window.height() / grid_size as f32;
 

@@ -17,12 +17,11 @@ impl Plugin for SimPlugin {
             reset: false,
             epoch: 0,
         })
-        .add_startup_system(setup_sim)
-        .add_system(handle_input)
+        .add_startup_system(startup_system)
+        .add_system(input_system)
         .add_system(sim_step)
         .add_system(advance_epoch)
         .add_system(reset_world)
-        .add_system(center_camera)
         .add_system(sim_info);
     }
 }

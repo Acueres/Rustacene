@@ -19,7 +19,7 @@ pub fn read_sensors(
     let pellet_coord = grid.search_along_dir(
         coord.x as usize,
         coord.y as usize,
-        5,
+        10,
         dir,
         CellType::Consumable,
     );
