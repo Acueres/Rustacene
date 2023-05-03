@@ -10,6 +10,7 @@ pub fn startup_system(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
     let mut window = window_query.get_single_mut().unwrap();
     window.resizable = false;
@@ -69,4 +70,135 @@ pub fn startup_system(
 
         commands.insert_resource(grid.clone());
     }
+
+    let control_menu = build_control_menu(&mut commands, &asset_server);
+    commands.entity(control_menu).insert(ControlMenu);
+}
+
+fn build_control_menu(commands: &mut Commands, asset_server: &Res<AssetServer>) -> Entity {
+    let info_label = commands
+        .spawn((
+            TextBundle::from_section(
+                "Sim Info",
+                TextStyle {
+                    font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                    font_size: 20.0,
+                    color: Color::WHITE,
+                },
+            ),
+            Label,
+        ))
+        .id();
+
+    let epoch = commands
+        .spawn((
+            TextBundle::from_sections([
+                TextSection::new(
+                    "Epoch: ",
+                    TextStyle {
+                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                        font_size: 16.0,
+                        color: Color::WHITE,
+                    },
+                ),
+                TextSection::new(
+                    "",
+                    TextStyle {
+                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                        font_size: 16.0,
+                        color: Color::WHITE,
+                    },
+                ),
+            ]),
+            EpochText,
+        ))
+        .id();
+
+    let population = commands
+        .spawn((
+            TextBundle::from_sections([
+                TextSection::new(
+                    "Population: ",
+                    TextStyle {
+                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                        font_size: 16.0,
+                        color: Color::WHITE,
+                    },
+                ),
+                TextSection::new(
+                    "",
+                    TextStyle {
+                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                        font_size: 16.0,
+                        color: Color::WHITE,
+                    },
+                ),
+            ]),
+            PopulationText,
+        ))
+        .id();
+
+    let energy = commands
+        .spawn((
+            TextBundle::from_sections([
+                TextSection::new(
+                    "Energy: ",
+                    TextStyle {
+                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                        font_size: 16.0,
+                        color: Color::WHITE,
+                    },
+                ),
+                TextSection::new(
+                    "",
+                    TextStyle {
+                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                        font_size: 16.0,
+                        color: Color::WHITE,
+                    },
+                ),
+            ]),
+            EnergyText,
+        ))
+        .id();
+
+    let info = commands
+        .spawn(NodeBundle {
+            style: Style {
+                size: Size::width(Val::Percent(20.0)),
+                justify_content: JustifyContent::SpaceEvenly,
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            ..default()
+        })
+        .push_children(&[info_label, epoch, population, energy])
+        .id();
+
+    let control_panel = commands
+        .spawn(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.0), Val::Percent(10.0)),
+                justify_content: JustifyContent::FlexStart,
+                flex_direction: FlexDirection::Row,
+                ..default()
+            },
+            background_color: Color::DARK_GRAY.into(),
+            ..default()
+        })
+        .push_children(&[info])
+        .id();
+
+    commands
+        .spawn(NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                justify_content: JustifyContent::FlexEnd,
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            ..default()
+        })
+        .push_children(&[control_panel])
+        .id()
 }

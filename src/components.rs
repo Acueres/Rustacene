@@ -8,6 +8,7 @@ mod ns;
 mod ns_shape;
 mod organism;
 mod pellet;
+mod ui;
 
 pub use action::*;
 pub use cell_type::*;
@@ -19,3 +20,4 @@ pub use ns::*;
 pub use ns_shape::*;
 pub use organism::*;
 pub use pellet::*;
+pub use ui::*;
