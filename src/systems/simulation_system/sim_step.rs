@@ -14,6 +14,7 @@ pub fn sim_step(
     params: Res<Parameters>,
     mut sim_time: ResMut<SimTime>,
     mut grid: ResMut<Grid>,
+    mut species: ResMut<Species>,
     mut orgs_query: Query<(
         Entity,
         &mut Organism,
@@ -100,7 +101,11 @@ pub fn sim_step(
             *coord = next_coord;
 
             if org.energy > 0.25 {
-                let child = org.replicate(0.05);
+                let mut child = org.replicate(5e-2);
+                if get_genetic_distance(&child.genome, &org.genome) > 1e-1 {
+                    child.species = species.next_species();
+                    species.add_species(child.species);
+                }
                 children.push((child, *coord));
             }
         }
@@ -134,6 +139,7 @@ pub fn sim_step(
                 &mut materials,
                 &child,
                 &child_coord,
+                species.get_color(child.species),
                 &params,
             );
         }

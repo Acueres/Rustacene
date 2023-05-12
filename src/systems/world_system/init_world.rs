@@ -1,14 +1,16 @@
-use crate::components::{CellType, Coord, Organism};
+use crate::components::{cluster_species, CellType, Coord, Organism};
 use crate::resources::{Grid, Parameters};
+
 use rand::Rng;
+use std::collections::HashSet;
 
 const INITIAL_ENERGY: f32 = 0.2;
 
-pub fn init_world(params: Parameters) -> (Vec<Organism>, Vec<Coord<isize>>, Grid) {
+pub fn init_world(params: Parameters) -> (Vec<Organism>, HashSet<usize>, Vec<Coord<isize>>, Grid) {
     let mut orgs = Vec::<Organism>::with_capacity(params.n_initial_entities * 3);
     let mut coords = Vec::<Coord<isize>>::with_capacity(params.n_initial_entities * 3);
 
-    let mut grid = Grid::init((params.grid_size, params.grid_size));
+    let mut grid = Grid::new((params.grid_size, params.grid_size));
 
     let mut rng = rand::thread_rng();
 
@@ -33,5 +35,11 @@ pub fn init_world(params: Parameters) -> (Vec<Organism>, Vec<Coord<isize>>, Grid
 
         n += 1;
     }
-    (orgs, coords, grid)
+    let (species_data, species) =
+        cluster_species(&(orgs.iter().map(|o| &o.genome).collect()), 1e-1);
+    orgs.iter_mut()
+        .zip(species_data.iter())
+        .for_each(|(org, species)| org.species = *species);
+
+    (orgs, species, coords, grid)
 }

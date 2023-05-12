@@ -13,5 +13,5 @@ pub fn energy_text_system(
     let total_system_energy: f32 = total_org_energy + total_pellet_energy;
 
     let mut energy_text = energy_query.get_single_mut().unwrap();
-    energy_text.sections[1].value = total_system_energy.to_string();
+    energy_text.sections[1].value = ((total_system_energy * 100.).round() / 100.).to_string();
 }

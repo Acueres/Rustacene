@@ -2,8 +2,7 @@ use super::*;
 use bevy::prelude::Component;
 use petgraph::graph::NodeIndex;
 use petgraph::stable_graph::StableGraph;
-use petgraph::visit::DfsPostOrder;
-use petgraph::visit::Reversed;
+use petgraph::visit::{DfsPostOrder, Reversed};
 use petgraph::Direction;
 use rand::prelude::SliceRandom;
 use std::collections::{HashMap, HashSet};
@@ -214,7 +213,6 @@ impl NeuralSystem {
         }
 
         res
-        //softmax(&res)
     }
 }
 

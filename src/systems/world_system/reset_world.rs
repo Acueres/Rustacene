@@ -9,6 +9,7 @@ pub fn reset_world(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut species: ResMut<Species>,
     orgs_query: Query<(Entity, &Organism)>,
     pellets_query: Query<(Entity, With<Pellet>, Without<Organism>)>,
 ) {
@@ -18,7 +19,8 @@ pub fn reset_world(
         }
         commands.remove_resource::<Grid>();
 
-        let (orgs, coords, mut grid) = init_world(*params);
+        let (orgs, initial_species, coords, mut grid) = init_world(*params);
+        *species = Species::new(initial_species);
         for (org, coord) in orgs.iter().zip(coords.iter()) {
             spawn_organism(
                 &mut commands,
@@ -26,6 +28,7 @@ pub fn reset_world(
                 &mut materials,
                 org,
                 coord,
+                species.get_color(org.species),
                 &params,
             );
         }

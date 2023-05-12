@@ -6,6 +6,7 @@ const REPLICATION_COST: f32 = 0.2;
 #[derive(Component, Clone)]
 pub struct Organism {
     pub genome: Vec<Gene>,
+    pub species: usize,
     pub age: usize,
     pub energy: f32,
 }
@@ -15,6 +16,7 @@ impl Organism {
         let genome: Vec<Gene> = get_genome(genome_len);
         Self {
             genome,
+            species: 0,
             age: 0,
             energy,
         }
@@ -25,6 +27,7 @@ impl Organism {
         self.energy -= REPLICATION_COST;
         Self {
             genome: new_genome,
+            species: self.species,
             age: 0,
             energy: REPLICATION_COST,
         }

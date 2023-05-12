@@ -44,7 +44,8 @@ pub fn startup_system(
 
     commands.insert_resource(params.clone());
 
-    let (orgs, coords, mut grid) = init_world(params);
+    let (orgs, initial_species, coords, mut grid) = init_world(params);
+    let species = Species::new(initial_species);
     for (org, coord) in orgs.iter().zip(coords.iter()) {
         spawn_organism(
             &mut commands,
@@ -52,9 +53,12 @@ pub fn startup_system(
             &mut materials,
             org,
             coord,
+            species.get_color(org.species),
             &params,
         );
     }
+
+    commands.insert_resource(species);
 
     let pellet_coords = generate_pellets(orgs.iter().map(|org| org.energy).sum::<f32>(), &grid);
     for coord in pellet_coords.iter() {
@@ -67,9 +71,9 @@ pub fn startup_system(
             params.cell_width,
             params.cell_height,
         );
-
-        commands.insert_resource(grid.clone());
     }
+
+    commands.insert_resource(grid.clone());
 
     let control_menu = build_control_menu(&mut commands, &asset_server);
     commands.entity(control_menu).insert(ControlMenu);

@@ -8,7 +8,7 @@ pub struct Grid {
 }
 
 impl Grid {
-    pub fn init(shape: (usize, usize)) -> Self {
+    pub fn new(shape: (usize, usize)) -> Self {
         let v = vec![CellType::Empty; shape.0 * shape.1];
         Self {
             data: Array2::<CellType>::from_shape_vec(shape, v).unwrap(),
@@ -111,7 +111,7 @@ mod grid_tests {
 
     #[test]
     fn test_search() {
-        let mut grid = Grid::init((100, 100));
+        let mut grid = Grid::new((100, 100));
 
         let origin = Coord::<isize>::new(10, 10);
         let target_coord = Coord::<isize>::new(12, 12);
@@ -133,7 +133,7 @@ mod grid_tests {
 
     #[test]
     fn test_search_boundary() {
-        let grid = Grid::init((100, 100));
+        let grid = Grid::new((100, 100));
 
         let origin = Coord::<isize>::new(0, 0);
 
@@ -149,12 +149,12 @@ mod grid_tests {
 
     #[test]
     fn test_search_area() {
-        let grid = Grid::init((100, 100));
+        let grid = Grid::new((100, 100));
         let coord = Coord::<isize>::new(10, 10);
         let neighbors = grid.search_area(coord, 1, CellType::Empty);
         assert!(neighbors.len() == 8);
 
-        let grid = Grid::init((100, 100));
+        let grid = Grid::new((100, 100));
         let coord = Coord::<isize>::new(0, 0);
         let neighbors = grid.search_area(coord, 1, CellType::Empty);
         assert!(neighbors.len() == 3);

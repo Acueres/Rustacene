@@ -9,6 +9,7 @@ pub fn spawn_organism(
     materials: &mut ResMut<Assets<ColorMaterial>>,
     org: &Organism,
     coord: &Coord<isize>,
+    color: Color,
     params: &Parameters,
 ) {
     let dir: Dir = rand::thread_rng().gen();
@@ -35,7 +36,7 @@ pub fn spawn_organism(
                     .into(),
                 )
                 .into(),
-            material: materials.add(ColorMaterial::from(Color::WHITE)),
+            material: materials.add(ColorMaterial::from(color)),
             transform: Transform::from_translation(Vec3::new(
                 (coord.x as f32) * params.cell_width,
                 (coord.y as f32) * params.cell_height,
