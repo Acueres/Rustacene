@@ -19,8 +19,8 @@ pub fn reset_world(
         }
         commands.remove_resource::<Grid>();
 
-        let (orgs, initial_species, coords, mut grid) = init_world(*params);
-        *species = Species::new(initial_species);
+        let (orgs, new_species, coords, mut grid) = init_world(*params);
+        *species = new_species;
         for (org, coord) in orgs.iter().zip(coords.iter()) {
             spawn_organism(
                 &mut commands,

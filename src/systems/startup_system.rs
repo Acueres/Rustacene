@@ -44,8 +44,7 @@ pub fn startup_system(
 
     commands.insert_resource(params.clone());
 
-    let (orgs, initial_species, coords, mut grid) = init_world(params);
-    let species = Species::new(initial_species);
+    let (orgs, species, coords, mut grid) = init_world(params);
     for (org, coord) in orgs.iter().zip(coords.iter()) {
         spawn_organism(
             &mut commands,
