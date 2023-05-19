@@ -1,4 +1,4 @@
-use crate::components::*;
+use crate::components::ui::*;
 use crate::resources::*;
 use bevy::prelude::*;
 

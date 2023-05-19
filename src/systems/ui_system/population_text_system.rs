@@ -1,4 +1,4 @@
-use crate::components::*;
+use crate::components::{ui::*, Organism};
 use bevy::prelude::*;
 
 pub fn population_text_system(

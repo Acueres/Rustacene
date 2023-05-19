@@ -17,13 +17,12 @@ impl Plugin for SimPlugin {
             reset: false,
             epoch: 0,
         })
-        .add_startup_system(startup_system)
-        .add_system(input_system)
-        .add_system(sim_step)
-        .add_system(advance_epoch)
-        .add_system(reset_world)
-        .add_system(energy_text_system)
-        .add_system(epoch_text_system)
-        .add_system(population_text_system);
+        .add_startup_systems((sim_startup_system, ui_startup_system))
+        .add_systems((input_system, sim_step, advance_epoch, reset_world))
+        .add_systems((
+            energy_text_system,
+            epoch_text_system,
+            population_text_system,
+        ));
     }
 }

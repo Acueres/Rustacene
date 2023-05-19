@@ -1,7 +1,10 @@
 use bevy::prelude::Component;
 
 #[derive(Component)]
-pub struct ControlMenu;
+pub struct GameMenu;
+
+#[derive(Component)]
+pub struct ControlPanel;
 
 #[derive(Component)]
 pub struct EpochText;

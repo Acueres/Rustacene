@@ -1,4 +1,5 @@
-use crate::components::*;
+use crate::components::ui::*;
+use crate::components::{CellType, Organism, PELLET_ENERGY};
 use crate::resources::*;
 use bevy::prelude::*;
 
