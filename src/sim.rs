@@ -20,9 +20,10 @@ impl Plugin for SimPlugin {
         .add_startup_systems((sim_startup_system, ui_startup_system))
         .add_systems((input_system, sim_step, advance_epoch, reset_world))
         .add_systems((
-            energy_text_system,
-            epoch_text_system,
-            population_text_system,
+            energy_info_system,
+            epoch_info_system,
+            population_info_system,
+            species_info_system,
         ));
     }
 }

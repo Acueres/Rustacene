@@ -13,6 +13,7 @@ pub fn advance_epoch(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut epoch_time: ResMut<EpochTime>,
     mut grid: ResMut<Grid>,
+    mut species: ResMut<Species>,
     mut orgs_query: Query<(Entity, &mut Organism, &Coord<isize>)>,
 ) {
     if !sim_state.paused && !sim_state.reset && epoch_time.timer.tick(time.delta()).just_finished()
@@ -24,6 +25,7 @@ pub fn advance_epoch(
 
         let mut n_entities = orgs_query.iter().len();
 
+        //organisms death
         for (e, mut org, coord) in orgs_query.iter_mut() {
             org.age += 1;
 
@@ -43,12 +45,17 @@ pub fn advance_epoch(
                 );
 
                 commands.entity(e).despawn();
+
                 n_entities -= 1;
+                species.decrement_species(org.species);
+
                 continue;
             } else {
                 total_orgs_energy += org.energy;
             }
         }
+
+        species.remove_dead_species();
 
         if n_entities == 0 {
             return;

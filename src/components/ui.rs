@@ -14,3 +14,9 @@ pub struct PopulationText;
 
 #[derive(Component)]
 pub struct EnergyText;
+
+#[derive(Component)]
+pub struct TotalSpeciesText;
+
+#[derive(Component)]
+pub struct SpeciesText;

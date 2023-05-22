@@ -103,9 +103,9 @@ pub fn sim_step(
             if org.energy > 0.25 {
                 let mut child = org.replicate(5e-2);
                 if child.genome.get_distance(&org.genome) > 1e-1 {
-                    child.species = species.next_species();
-                    species.add_species(child.species);
+                    child.species = species.add_species();
                 }
+                species.increment_species(child.species);
                 children.push((child, *coord));
             }
         }

@@ -34,7 +34,7 @@ pub fn init_world(params: Parameters) -> (Vec<Organism>, Species, Vec<Coord<isiz
         n += 1;
     }
     let (species, assigned_species) =
-        Species::cluster(&(orgs.iter().map(|o| &o.genome).collect()), 1e-1);
+        Species::from_genomes(&(orgs.iter().map(|o| &o.genome).collect()), 1e-1);
     orgs.iter_mut()
         .zip(assigned_species.iter())
         .for_each(|(org, species)| org.species = *species);
