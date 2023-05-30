@@ -22,11 +22,10 @@ impl Organism {
         }
     }
 
-    pub fn replicate(&mut self, mut_p: f32) -> Self {
-        let new_genome = self.genome.replicate(mut_p as f64);
+    pub fn replicate(&mut self, mut_p: f64, insert_p: f64) -> Self {
         self.energy -= REPLICATION_COST;
         Self {
-            genome: new_genome,
+            genome: self.genome.replicate(mut_p, insert_p),
             species: self.species,
             age: 0,
             energy: REPLICATION_COST,

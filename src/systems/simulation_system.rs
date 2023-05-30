@@ -1,9 +1,9 @@
-mod advance_epoch;
-mod sim_step;
-mod generate_pellets;
+mod energy_system;
+mod epoch_system;
 mod sensor_system;
+mod sim_step;
 
-pub use advance_epoch::*;
-pub use sim_step::*;
-pub use generate_pellets::*;
+pub use energy_system::*;
+pub use epoch_system::*;
 pub use sensor_system::*;
+pub use sim_step::*;

@@ -148,26 +148,21 @@ impl Species {
 
     #[inline]
     pub fn increment_species(&mut self, species: usize) {
-        let n = self.population_count.get_mut(&species);
-        if n.is_some() {
-            *n.unwrap() += 1;
+        if let Some(n) = self.population_count.get_mut(&species) {
+            *n += 1;
         }
     }
 
     #[inline]
     pub fn decrement_species(&mut self, species: usize) {
-        let n = self.population_count.get_mut(&species);
-        if n.is_some() {
-            let n = n.unwrap();
+        if let Some(n) = self.population_count.get_mut(&species) {
             *n = if *n > 0 { *n - 1 } else { 0 };
         }
     }
 
     #[inline]
     pub fn get_color(&self, species: usize) -> Color {
-        let color_option = self.color_map.get(&species);
-        if color_option.is_some() {
-            let color = color_option.unwrap();
+        if let Some(color) = self.color_map.get(&species) {
             return Color::rgb_u8(color.0, color.1, color.2);
         }
 

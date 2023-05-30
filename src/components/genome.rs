@@ -3,42 +3,52 @@ use rand::Rng;
 
 #[derive(Clone, PartialEq)]
 pub struct Genome {
-    data: Vec<Gene>,
+    genes: Vec<Gene>,
 }
 
 impl Genome {
     pub fn new(len: usize) -> Self {
         let mut rng = rand::thread_rng();
         Self {
-            data: (0..len).map(|_| rng.gen::<Gene>()).collect(),
+            genes: (0..len).map(|_| rng.gen::<Gene>()).collect(),
         }
     }
 
     #[cfg(test)]
     pub fn from(genes: Vec<Gene>) -> Self {
-        Self { data: genes }
+        Self { genes }
     }
 
-    pub fn replicate(&self, mut_p: f64) -> Self {
+    pub fn replicate(&self, mut_p: f64, insert_p: f64) -> Self {
         let mut rng = rand::thread_rng();
-        Self {
-            data: self
-                .data
-                .iter()
-                .map(|g| {
-                    if rng.gen_bool(mut_p) {
-                        g.flip_bit(rng.gen_range(0..i32::BITS - 1) as usize)
-                    } else {
-                        g.to_owned()
-                    }
-                })
-                .collect(),
+        let mut child_genes = self.genes.clone();
+
+        if !rng.gen_bool(mut_p) {
+            return Self { genes: child_genes };
         }
+
+        let genome_len = child_genes.len();
+        let index = rng.gen_range(0..=genome_len);
+        let insert = rng.gen_bool(insert_p);
+        let append = insert && index == genome_len;
+
+        if append {
+            child_genes.push(rng.gen());
+        } else if insert {
+            child_genes.insert(index, rng.gen());
+        } else {
+            let index = index.clamp(0, genome_len - 1);
+            child_genes[index] =
+                child_genes[index].flip_bit(rng.gen_range(0..i32::BITS - 1) as usize);
+        }
+
+        Self { genes: child_genes }
     }
 
     pub fn get_distance(&self, other: &Self) -> f32 {
-        let mut distance = 0.;
-        for (g1, g2) in self.data.iter().zip(other.data.iter()) {
+        let mut distance = (self.genes.len() as f32 - other.genes.len() as f32).abs();
+
+        for (g1, g2) in self.genes.iter().zip(other.genes.iter()) {
             if g1.get_in_type() == g2.get_in_type()
                 && g1.get_out_type() == g2.get_out_type()
                 && g1.get_in_index() == g2.get_in_index()
@@ -50,11 +60,11 @@ impl Genome {
             }
         }
 
-        (distance / other.data.len() as f32).clamp(0., 1.)
+        (distance / self.genes.len().max(other.genes.len()) as f32).clamp(0., 1.)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Gene> {
-        self.data.iter()
+        self.genes.iter()
     }
 }
 
@@ -74,11 +84,12 @@ mod tests {
             Gene(0b010_1001001_1111010_000011010000011),
             Gene(0b011_1001001_1111010_000010010000011),
             Gene(0b011_1001011_1111110_000011010000011),
+            Gene(0b011_1001111_1111110_000011010010011),
         ]);
 
-        //first genes are equal, second genes differ in weights, third genes are disjoint
+        //first genes are equal, second genes differ in weights, third genes are disjoint, fourth genes are excessive
         let expected_distance =
-            ((genome1.data[1].get_weightf() - genome2.data[1].get_weightf()).abs() + 1.) / 3.;
+            ((genome1.genes[1].get_weightf() - genome2.genes[1].get_weightf()).abs() + 2.) / 4.;
 
         let actual_distance = genome1.get_distance(&genome2);
         assert_eq!(actual_distance, expected_distance);

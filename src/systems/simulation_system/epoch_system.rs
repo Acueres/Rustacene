@@ -4,7 +4,7 @@ use crate::systems::*;
 use bevy::prelude::*;
 use rand::Rng;
 
-pub fn advance_epoch(
+pub fn epoch_system(
     mut commands: Commands,
     time: Res<Time>,
     mut sim_state: ResMut<SimState>,
@@ -25,30 +25,19 @@ pub fn advance_epoch(
 
         let mut n_entities = orgs_query.iter().len();
 
-        //organisms death
+        //organism death
         for (e, mut org, coord) in orgs_query.iter_mut() {
             org.age += 1;
 
-            if org.age >= params.average_lifespan
-                && rng.gen_bool(
-                    (0.5 + (org.age as f64 / params.average_lifespan as f64)).clamp(0.5, 1.),
-                )
+            if org.age > params.average_lifespan
+                && rng
+                    .gen_bool((org.age as f64 / params.average_lifespan as f64 - 1.).clamp(0., 1.))
             {
-                grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
-                spawn_pellet(
-                    &mut commands,
-                    &mut meshes,
-                    &mut materials,
-                    coord,
-                    params.cell_width,
-                    params.cell_height,
-                );
-
-                commands.entity(e).despawn();
-
                 n_entities -= 1;
+                grid.set(coord.x as usize, coord.y as usize, CellType::Empty);
                 species.decrement_species(org.species);
 
+                commands.entity(e).despawn_recursive();
                 continue;
             } else {
                 total_orgs_energy += org.energy;
@@ -61,7 +50,7 @@ pub fn advance_epoch(
             return;
         }
 
-        let pellet_coords = generate_pellets(total_orgs_energy, &grid);
+        let pellet_coords = energy_system(total_orgs_energy, &grid);
         for coord in pellet_coords.iter() {
             grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
             spawn_pellet(

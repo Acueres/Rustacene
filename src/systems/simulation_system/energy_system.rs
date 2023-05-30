@@ -4,7 +4,7 @@ use rand::seq::SliceRandom;
 
 const MAX_ENERGY: f32 = 100.;
 
-pub fn generate_pellets(total_org_energy: f32, grid: &Grid) -> Vec<Coord<isize>> {
+pub fn energy_system(total_org_energy: f32, grid: &Grid) -> Vec<Coord<isize>> {
     let rng = &mut rand::thread_rng();
     let total_pellet_energy =
         grid.get_cell_coords(CellType::Consumable).iter().len() as f32 * PELLET_ENERGY;

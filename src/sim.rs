@@ -18,7 +18,7 @@ impl Plugin for SimPlugin {
             epoch: 0,
         })
         .add_startup_systems((sim_startup_system, ui_startup_system))
-        .add_systems((input_system, sim_step, advance_epoch, reset_world))
+        .add_systems((input_system, sim_step, epoch_system, reset_world))
         .add_systems((
             energy_info_system,
             epoch_info_system,

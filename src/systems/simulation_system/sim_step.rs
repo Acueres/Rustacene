@@ -31,18 +31,12 @@ pub fn sim_step(
         let mut pellets_to_remove = Vec::<Coord<isize>>::new();
 
         for (e, mut org, mut ns, mut coord, mut curr_dir, mut transform) in orgs_query.iter_mut() {
+            //organism death
             if org.energy.is_sign_negative() {
-                grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
-                spawn_pellet(
-                    &mut commands,
-                    &mut meshes,
-                    &mut materials,
-                    &coord,
-                    params.cell_width,
-                    params.cell_height,
-                );
+                grid.set(coord.x as usize, coord.y as usize, CellType::Empty);
+                species.decrement_species(org.species);
 
-                commands.entity(e).despawn();
+                commands.entity(e).despawn_recursive();
                 continue;
             }
 
@@ -101,7 +95,7 @@ pub fn sim_step(
             *coord = next_coord;
 
             if org.energy > 0.25 {
-                let mut child = org.replicate(5e-2);
+                let mut child = org.replicate(0.1, 0.2);
                 if child.genome.get_distance(&org.genome) > 1e-1 {
                     child.species = species.add_species();
                 }

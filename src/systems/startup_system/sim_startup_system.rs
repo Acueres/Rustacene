@@ -30,10 +30,9 @@ pub fn sim_startup_system(
     let params = Parameters {
         grid_size,
         n_initial_entities: 100,
-        n_max_entities: 500,
-        genome_len: 20,
-        ns_shape: NsShape::new(N_SENSORS, 5, N_ACTIONS),
-        average_lifespan: 7,
+        initial_genome_len: 10,
+        ns_shape: NsShape::new(N_SENSORS, 10, N_ACTIONS),
+        average_lifespan: 15,
         cell_height,
         cell_width,
     };
@@ -55,7 +54,7 @@ pub fn sim_startup_system(
 
     commands.insert_resource(species);
 
-    let pellet_coords = generate_pellets(orgs.iter().map(|org| org.energy).sum::<f32>(), &grid);
+    let pellet_coords = energy_system(orgs.iter().map(|org| org.energy).sum::<f32>(), &grid);
     for coord in pellet_coords.iter() {
         grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
         spawn_pellet(
