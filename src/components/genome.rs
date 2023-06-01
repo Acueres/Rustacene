@@ -19,27 +19,29 @@ impl Genome {
         Self { genes }
     }
 
-    pub fn replicate(&self, mut_p: f64, insert_p: f64) -> Self {
+    pub fn replicate(&self, mut_p: f64, insert_p: f64, delete_p: f64) -> Self {
         let mut rng = rand::thread_rng();
         let mut child_genes = self.genes.clone();
-
-        if !rng.gen_bool(mut_p) {
-            return Self { genes: child_genes };
-        }
-
         let genome_len = child_genes.len();
-        let index = rng.gen_range(0..=genome_len);
-        let insert = rng.gen_bool(insert_p);
-        let append = insert && index == genome_len;
 
-        if append {
-            child_genes.push(rng.gen());
-        } else if insert {
-            child_genes.insert(index, rng.gen());
-        } else {
-            let index = index.clamp(0, genome_len - 1);
+        if rng.gen_bool(mut_p) {
+            let index = rng.gen_range(0..genome_len);
             child_genes[index] =
                 child_genes[index].flip_bit(rng.gen_range(0..i32::BITS - 1) as usize);
+        }
+
+        if rng.gen_bool(insert_p) {
+            let index = rng.gen_range(0..=genome_len);
+            if index == genome_len {
+                child_genes.push(rng.gen());
+            } else {
+                child_genes.insert(index, rng.gen());
+            }
+        }
+
+        if rng.gen_bool(delete_p) {
+            let index = rng.gen_range(0..genome_len);
+            child_genes.remove(index);
         }
 
         Self { genes: child_genes }

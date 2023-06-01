@@ -44,8 +44,6 @@ pub fn epoch_system(
             }
         }
 
-        species.remove_dead_species();
-
         if n_entities == 0 {
             return;
         }

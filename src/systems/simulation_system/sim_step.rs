@@ -94,8 +94,12 @@ pub fn sim_step(
 
             *coord = next_coord;
 
-            if org.energy > 0.25 {
-                let mut child = org.replicate(0.1, 0.2);
+            if org.can_replicate() {
+                let mut child = org.replicate(
+                    params.mutate_gene_proba,
+                    params.insert_gene_proba,
+                    params.delete_gene_proba,
+                );
                 if child.genome.get_distance(&org.genome) > 1e-1 {
                     child.species = species.add_species();
                 }

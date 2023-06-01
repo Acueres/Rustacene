@@ -128,22 +128,13 @@ impl Species {
     }
 
     #[inline]
-    pub fn remove_dead_species(&mut self) {
-        let dead_species: Vec<usize> = self
-            .population_count
-            .iter()
-            .filter(|(_, n)| **n == 0)
-            .map(|(s, _)| *s)
-            .collect();
+    pub fn remove_species(&mut self, species: &usize) {
+        self.species.remove(species);
+        self.population_count.remove(species);
 
-        for s in dead_species.iter() {
-            self.species.remove(s);
-            self.population_count.remove(s);
-
-            let color = *self.color_map.get(s).unwrap();
-            self.colors.remove(&color);
-            self.color_map.remove(s);
-        }
+        let color = *self.color_map.get(species).unwrap();
+        self.colors.remove(&color);
+        self.color_map.remove(species);
     }
 
     #[inline]
@@ -157,6 +148,9 @@ impl Species {
     pub fn decrement_species(&mut self, species: usize) {
         if let Some(n) = self.population_count.get_mut(&species) {
             *n = if *n > 0 { *n - 1 } else { 0 };
+            if *n == 0 {
+                self.remove_species(&species);
+            }
         }
     }
 
