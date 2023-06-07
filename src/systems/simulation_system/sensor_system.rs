@@ -1,8 +1,6 @@
 use crate::components::{CellType, Coord, Dir, Organism};
 use crate::resources::*;
 
-pub const N_SENSORS: usize = 10;
-
 #[inline]
 pub fn read_sensors(
     org: &Organism,

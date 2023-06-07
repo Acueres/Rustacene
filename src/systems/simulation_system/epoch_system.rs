@@ -29,9 +29,8 @@ pub fn epoch_system(
         for (e, mut org, coord) in orgs_query.iter_mut() {
             org.age += 1;
 
-            if org.age > params.average_lifespan
-                && rng
-                    .gen_bool((org.age as f64 / params.average_lifespan as f64 - 1.).clamp(0., 1.))
+            if org.age > params.lifespan
+                && rng.gen_bool((org.age as f64 / params.lifespan as f64 - 1.).clamp(0., 1.))
             {
                 n_entities -= 1;
                 grid.set(coord.x as usize, coord.y as usize, CellType::Empty);

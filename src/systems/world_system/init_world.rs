@@ -23,7 +23,10 @@ pub fn init_world(params: Parameters) -> (Vec<Organism>, Species, Vec<Coord<isiz
 
         grid.set(x, y, CellType::Impassable);
 
-        orgs.push(Organism::new(INITIAL_ENERGY, params.initial_genome_len));
+        orgs.push(Organism::new(
+            INITIAL_ENERGY,
+            params.n_initial_connections + params.n_initial_neurons,
+        ));
 
         let coord = Coord::<isize> {
             x: x as isize,

@@ -1,4 +1,4 @@
-use crate::components::{Connection, Coord, Dir, NeuralSystem, Organism, Pellet};
+use crate::components::*;
 use crate::resources::Parameters;
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use rand::Rng;
@@ -13,12 +13,32 @@ pub fn spawn_organism(
     params: &Parameters,
 ) {
     let dir: Dir = rand::thread_rng().gen();
+
+    let (conn_genes, neuron_genes): (Vec<Gene>, Vec<Gene>) =
+        org.genome.iter().partition(|g| g.is_connection());
+
+    let mut neurons_indexed: Vec<_> = neuron_genes
+        .into_iter()
+        .map(|g| Neuron::from_gene(g))
+        .collect();
+    neurons_indexed.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let ns_shape = NsShape::new(
+        NeuralSystem::N_SENSORS,
+        neurons_indexed.len(),
+        Action::N_ACTIONS,
+    );
+
     let ns = NeuralSystem::new(
-        &org.genome
+        &neurons_indexed
+            .into_iter()
+            .map(|(_, neuron)| neuron)
+            .collect::<Vec<Neuron>>(),
+        &conn_genes
             .iter()
-            .map(|gene| Connection::from_gene(*gene, &params.ns_shape))
+            .map(|gene| Connection::from_gene(*gene, &ns_shape))
             .collect::<Vec<Connection>>(),
-        params.ns_shape,
+        ns_shape,
     );
 
     commands.spawn((

@@ -30,19 +30,24 @@ pub fn sim_startup_system(
     let params = Parameters {
         grid_size,
         n_initial_entities: 100,
-        initial_genome_len: 10,
+        n_initial_connections: 10,
+        n_initial_neurons: 5,
         mutate_gene_proba: 0.1,
         insert_gene_proba: 0.05,
         delete_gene_proba: 0.03,
-        ns_shape: NsShape::new(N_SENSORS, 10, N_ACTIONS),
-        average_lifespan: 15,
+        lifespan: 15,
         cell_height,
         cell_width,
     };
 
     commands.insert_resource(params.clone());
 
-    let (orgs, species, coords, mut grid) = init_world(params);
+    let (mut orgs, species, coords, mut grid) = init_world(params);
+    orgs.iter_mut().for_each(|o| {
+        o.genome
+            .set_gene_types(params.n_initial_connections, params.n_initial_neurons)
+    });
+
     for (org, coord) in orgs.iter().zip(coords.iter()) {
         spawn_organism(
             &mut commands,

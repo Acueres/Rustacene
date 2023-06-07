@@ -29,7 +29,7 @@ impl Distribution<Dir> for Standard {
             5 => Dir::NW,
             6 => Dir::SE,
             7 => Dir::SW,
-            _ => panic!("Range error"),
+            _ => panic!(),
         }
     }
 }

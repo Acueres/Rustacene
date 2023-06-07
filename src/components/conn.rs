@@ -44,7 +44,7 @@ impl Connection {
 
     #[inline]
     pub fn from_gene(gene: Gene, ns_shape: &NsShape) -> Self {
-        let w = gene.get_weightf();
+        let w = gene.get_conn_weight();
         let sensor_in = gene.get_in_type() == 1;
         let sensor_out = gene.get_out_type() == 1;
 

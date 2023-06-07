@@ -56,13 +56,30 @@ impl Genome {
                 && g1.get_in_index() == g2.get_in_index()
                 && g1.get_out_index() == g2.get_out_index()
             {
-                distance += (g1.get_weightf() - g2.get_weightf()).abs();
+                distance += (g1.get_conn_weight() - g2.get_conn_weight()).abs();
             } else {
                 distance += 1.;
             }
         }
 
         (distance / self.genes.len().max(other.genes.len()) as f32).clamp(0., 1.)
+    }
+
+    /**Sets genes to specified types*/
+    pub fn set_gene_types(&mut self, n_connections: usize, n_neurons: usize) {
+        let n_total = n_connections + n_neurons;
+        if n_total > self.genes.len() {
+            panic!("Required number of genes of specific types doesn't match genome length");
+        }
+
+        for i in 0..n_connections {
+            self.genes[i].set_bit(31, 0);
+        }
+
+        for i in n_connections..n_total {
+            self.genes[i].set_bit(31, 1);
+            self.genes[i].set_bit(30, 1);
+        }
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &Gene> {
@@ -91,9 +108,22 @@ mod tests {
 
         //first genes are equal, second genes differ in weights, third genes are disjoint, fourth genes are excessive
         let expected_distance =
-            ((genome1.genes[1].get_weightf() - genome2.genes[1].get_weightf()).abs() + 2.) / 4.;
+            ((genome1.genes[1].get_conn_weight() - genome2.genes[1].get_conn_weight()).abs() + 2.)
+                / 4.;
 
         let actual_distance = genome1.get_distance(&genome2);
         assert_eq!(actual_distance, expected_distance);
+    }
+
+    #[test]
+    fn test_set_gene_types() {
+        let mut genome = Genome::new(50);
+        genome.set_gene_types(30, 20);
+
+        assert_eq!(
+            30,
+            genome.genes.iter().filter(|g| g.is_connection()).count()
+        );
+        assert_eq!(20, genome.genes.iter().filter(|g| g.is_neuron()).count());
     }
 }

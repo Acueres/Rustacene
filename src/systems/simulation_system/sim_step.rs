@@ -49,7 +49,7 @@ pub fn sim_step(
             );
 
             let action = ns.get_action(inputs);
-            org.sub_energy(NS_ENERGY_COST); // thinking requires energy
+            org.sub_energy(NeuralSystem::ENERGY_COST); // thinking requires energy
 
             if action == Action::Halt {
                 continue;
