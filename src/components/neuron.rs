@@ -31,7 +31,7 @@ impl Neuron {
 
     #[inline]
     pub fn fire(&mut self) -> f32 {
-        if self.value > self.w.abs() {
+        if self.value.abs() > self.w {
             self.value = (self.activation)(self.value);
             return self.value;
         }

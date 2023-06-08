@@ -19,7 +19,12 @@ pub fn reset_world(
         }
         commands.remove_resource::<Grid>();
 
-        let (orgs, new_species, coords, mut grid) = init_world(*params);
+        let (mut orgs, new_species, coords, mut grid) = init_world(*params);
+        orgs.iter_mut().for_each(|o| {
+            o.genome
+                .set_gene_types(params.n_initial_connections, params.n_initial_neurons)
+        });
+
         *species = new_species;
         for (org, coord) in orgs.iter().zip(coords.iter()) {
             spawn_organism(
