@@ -13,6 +13,7 @@ pub struct NeuralSystem {
     nn_graph: StableGraph<Neuron, f32>,
     nodes: Vec<usize>,
     sources: HashSet<usize>,
+    nodes_to_clear: HashSet<usize>,
     self_connected: HashSet<usize>,
 }
 
@@ -20,17 +21,24 @@ impl NeuralSystem {
     pub const N_SENSORS: usize = 10;
     pub const ENERGY_COST: f32 = 1e-6;
 
-    pub fn new(neurons: &Vec<Neuron>, connections: &Vec<Connection>, ns_shape: NsShape) -> Self {
+    pub fn new(
+        neurons: &Vec<(bool, Neuron)>,
+        connections: &Vec<Connection>,
+        ns_shape: NsShape,
+    ) -> Self {
         let mut nn_graph =
             StableGraph::<Neuron, f32>::with_capacity(ns_shape.n_neurons, connections.len());
-
+        let mut memory_nodes = HashSet::<usize>::new();
         let out_start = ns_shape.input + ns_shape.hidden;
 
         for _ in 0..ns_shape.input {
             nn_graph.add_node(Neuron::new(0., Activation::Identity));
         }
 
-        for neuron in neurons.into_iter() {
+        for (i, (is_memory, neuron)) in neurons.into_iter().enumerate() {
+            if *is_memory {
+                memory_nodes.insert(ns_shape.input + i);
+            }
             nn_graph.add_node(*neuron);
         }
 
@@ -98,11 +106,15 @@ impl NeuralSystem {
             }
         }
 
+        let nodes_to_clear =
+            &(&HashSet::<usize>::from_iter(nodes.iter().cloned()) - &sources) - &memory_nodes;
+
         Self {
             ns_shape,
             nn_graph,
             nodes,
             sources,
+            nodes_to_clear,
             self_connected,
         }
     }
@@ -150,12 +162,12 @@ impl NeuralSystem {
             self_connected_values.insert(*index, value);
         }
 
-        let neurons_to_clear =
-            &HashSet::<usize>::from_iter(self.nodes.iter().cloned()) - &self.sources;
-        for index in neurons_to_clear.into_iter() {
+        //let neurons_to_clear =
+        //&HashSet::<usize>::from_iter(self.nodes.iter().cloned()) - &self.sources;
+        for index in self.nodes_to_clear.iter() {
             let neuron = self
                 .nn_graph
-                .node_weight_mut(NodeIndex::new(index))
+                .node_weight_mut(NodeIndex::new(*index))
                 .unwrap();
             neuron.value = 0.;
         }
@@ -238,8 +250,8 @@ mod tests {
         let ns_shape = NsShape::new(3, 2, 1);
 
         let neurons = vec![
-            Neuron::new(0., Activation::Tanh),
-            Neuron::new(0., Activation::Tanh),
+            (false, Neuron::new(0., Activation::Tanh)),
+            (false, Neuron::new(0., Activation::Tanh)),
         ];
         let connections = vec![
             Connection::new(1., ConnectionType::In, 0, 0).renumber(&ns_shape),
@@ -271,9 +283,9 @@ mod tests {
         let ns_shape = NsShape::new(1, 3, 1);
 
         let neurons = vec![
-            Neuron::new(0., Activation::Tanh),
-            Neuron::new(0., Activation::Tanh),
-            Neuron::new(0.5, Activation::Tanh),
+            (false, Neuron::new(0., Activation::Tanh)),
+            (false, Neuron::new(0., Activation::Tanh)),
+            (false, Neuron::new(0.5, Activation::Tanh)),
         ];
         let mut connections = vec![
             Connection::new(1., ConnectionType::In, 0, 0).renumber(&ns_shape),
@@ -303,7 +315,7 @@ mod tests {
     fn test_self_connected_source() {
         let ns_shape = NsShape::new(1, 1, 1);
 
-        let neurons = vec![Neuron::new(0.5, Activation::Tanh)];
+        let neurons = vec![(false, Neuron::new(0.5, Activation::Tanh))];
         let connections = vec![
             Connection::new(0.7, ConnectionType::Internal, 0, 0).renumber(&ns_shape),
             Connection::new(1., ConnectionType::Internal, 0, 0).renumber(&ns_shape),
@@ -334,7 +346,7 @@ mod tests {
     fn test_self_connected() {
         let ns_shape = NsShape::new(2, 1, 1);
 
-        let neurons = vec![Neuron::new(0., Activation::Tanh)];
+        let neurons = vec![(false, Neuron::new(0., Activation::Tanh))];
         let connections = vec![
             Connection::new(1.2, ConnectionType::In, 0, 0).renumber(&ns_shape),
             Connection::new(0.9, ConnectionType::In, 1, 0).renumber(&ns_shape),
@@ -345,7 +357,7 @@ mod tests {
         ];
 
         let mut ns = NeuralSystem::new(&neurons, &connections, ns_shape);
-        //set a weight to self-connected node
+        //set value to self-connected node
         ns.nn_graph
             .node_weight_mut(NodeIndex::new(2))
             .unwrap()
@@ -376,10 +388,10 @@ mod tests {
         let ns_shape = NsShape::new(4, 4, 2);
 
         let neurons = vec![
-            Neuron::new(0., Activation::Tanh),
-            Neuron::new(0., Activation::Tanh),
-            Neuron::new(0., Activation::Tanh),
-            Neuron::new(0., Activation::Tanh),
+            (false, Neuron::new(0., Activation::Tanh)),
+            (false, Neuron::new(0., Activation::Tanh)),
+            (false, Neuron::new(0., Activation::Tanh)),
+            (false, Neuron::new(0., Activation::Tanh)),
         ];
         let mut connections = vec![
             //input to internal
@@ -412,5 +424,30 @@ mod tests {
         //test pruning
         assert_eq!(ns_shape.n_neurons - 1, ns.nn_graph.node_count());
         assert_eq!(connections.len() - 1, ns.nn_graph.edge_count());
+    }
+
+    #[test]
+    fn test_memory_nodes() {
+        let ns_shape = NsShape::new(1, 1, 1);
+
+        let neurons = vec![(true, Neuron::new(0., Activation::Tanh))];
+        let connections = vec![
+            Connection::new(1.6, ConnectionType::In, 0, 0).renumber(&ns_shape),
+            Connection::new(0.4, ConnectionType::Out, 0, 0).renumber(&ns_shape),
+        ];
+
+        let mut ns = NeuralSystem::new(&neurons, &connections, ns_shape);
+
+        let input = vec![0.7];
+        let memory_value = (0.7 * 1.6_f32).tanh();
+        let expected_output: f32 = (((0.7 * 1.6_f32) + memory_value).tanh() * 0.4_f32).tanh();
+
+        ns.forward(&input);
+        let actual_output = *ns.forward(&input).first().unwrap();
+
+        assert_eq!(
+            (actual_output * 1e6) as usize,
+            (expected_output * 1e6) as usize
+        );
     }
 }

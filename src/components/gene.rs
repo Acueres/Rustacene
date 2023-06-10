@@ -74,10 +74,10 @@ impl Gene {
         Activation::get(((self.0 >> 28) & 3) as usize)
     }
 
-    /**Get 1-bit neuron memory type*/
+    /**Check if neuron is memory type*/
     #[inline]
-    pub fn get_memory(self) -> usize {
-        ((self.0 >> 27) & 1) as usize
+    pub fn is_memory(self) -> bool {
+        ((self.0 >> 27) & 1) as usize == 1
     }
 
     /**Get 12-bit neuron index*/
@@ -143,8 +143,8 @@ mod tests {
         let index = gene.get_neuron_index();
         assert_eq!(index, 145);
 
-        let memory = gene.get_memory();
-        assert_eq!(memory, 0);
+        let memory = gene.is_memory();
+        assert_eq!(memory, false);
 
         let activation = gene.get_activation_type();
         assert_eq!(activation, Activation::Gaussian);

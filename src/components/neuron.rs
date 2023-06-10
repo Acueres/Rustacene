@@ -18,9 +18,10 @@ impl Neuron {
     }
 
     #[inline]
-    pub fn from_gene(gene: Gene) -> (usize, Self) {
+    pub fn from_gene(gene: Gene) -> (usize, bool, Self) {
         (
             gene.get_neuron_index(),
+            gene.is_memory(),
             Self {
                 w: gene.get_neuron_weight(),
                 value: 0.,

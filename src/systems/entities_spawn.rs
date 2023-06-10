@@ -32,8 +32,8 @@ pub fn spawn_organism(
     let ns = NeuralSystem::new(
         &neurons_indexed
             .into_iter()
-            .map(|(_, neuron)| neuron)
-            .collect::<Vec<Neuron>>(),
+            .map(|(_, memory, neuron)| (memory, neuron))
+            .collect::<Vec<(bool, Neuron)>>(),
         &conn_genes
             .iter()
             .map(|gene| Connection::from_gene(*gene, &ns_shape))
