@@ -17,32 +17,41 @@ pub fn spawn_organism(
     let (conn_genes, neuron_genes): (Vec<Gene>, Vec<Gene>) =
         org.genome.iter().partition(|g| g.is_connection());
 
-    let mut neurons_indexed: Vec<_> = neuron_genes
+    let mut neurons: Vec<_> = neuron_genes
         .into_iter()
         .map(|g| Neuron::from_gene(g))
         .collect();
-    neurons_indexed.sort_by(|a, b| a.0.cmp(&b.0));
+    neurons.sort_by(|a, b| a.0.cmp(&b.0));
 
-    let ns_shape = NsShape::new(
-        NeuralSystem::N_SENSORS,
-        neurons_indexed.len(),
-        Action::N_ACTIONS,
+    let (sensor_neurons, hidden_neurons) = neurons.split_at(SensorySystem::N_SENSORS);
+
+    let ss = SensorySystem::new(
+        sensor_neurons
+            .into_iter()
+            .map(|(_, _, neuron)| neuron.w)
+            .collect(),
     );
 
+    let ns_shape = NsShape::new(
+        SensorySystem::N_SENSORS,
+        hidden_neurons.len(),
+        Action::N_ACTIONS,
+    );
     let ns = NeuralSystem::new(
-        &neurons_indexed
+        &hidden_neurons
             .into_iter()
-            .map(|(_, memory, neuron)| (memory, neuron))
-            .collect::<Vec<(bool, Neuron)>>(),
+            .map(|(_, memory, neuron)| (*memory, *neuron))
+            .collect(),
         &conn_genes
             .iter()
             .map(|gene| Connection::from_gene(*gene, &ns_shape))
-            .collect::<Vec<Connection>>(),
+            .collect(),
         ns_shape,
     );
 
     commands.spawn((
         org.to_owned(),
+        ss,
         ns,
         coord.to_owned(),
         dir,

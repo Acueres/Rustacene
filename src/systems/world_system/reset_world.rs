@@ -21,8 +21,10 @@ pub fn reset_world(
 
         let (mut orgs, new_species, coords, mut grid) = init_world(*params);
         orgs.iter_mut().for_each(|o| {
-            o.genome
-                .set_gene_types(params.n_initial_connections, params.n_initial_neurons)
+            o.genome.set_gene_types(
+                params.n_initial_connections,
+                params.n_initial_neurons + SensorySystem::N_SENSORS,
+            )
         });
 
         *species = new_species;

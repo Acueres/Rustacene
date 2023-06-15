@@ -1,4 +1,4 @@
-use crate::components::{CellType, Coord, Organism};
+use crate::components::{CellType, Coord, Organism, SensorySystem};
 use crate::resources::{Grid, Parameters, Species};
 use rand::Rng;
 
@@ -25,7 +25,7 @@ pub fn init_world(params: Parameters) -> (Vec<Organism>, Species, Vec<Coord<isiz
 
         orgs.push(Organism::new(
             INITIAL_ENERGY,
-            params.n_initial_connections + params.n_initial_neurons,
+            params.n_initial_connections + params.n_initial_neurons + SensorySystem::N_SENSORS,
         ));
 
         let coord = Coord::<isize> {

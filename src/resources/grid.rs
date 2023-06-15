@@ -1,4 +1,4 @@
-use crate::components::{CellType, Coord, Dir};
+use crate::components::{CellType, Coord};
 use bevy::prelude::Resource;
 use ndarray::Array2;
 
@@ -13,37 +13,6 @@ impl Grid {
         Self {
             data: Array2::<CellType>::from_shape_vec(shape, v).unwrap(),
         }
-    }
-
-    pub fn search_along_dir(
-        &self,
-        x_origin: usize,
-        y_origin: usize,
-        distance: usize,
-        dir: Dir,
-        cell_type: CellType,
-    ) -> Coord<isize> {
-        let dir_coord = dir.value();
-        let origin_coord = Coord::<isize>::new(x_origin as isize, y_origin as isize);
-        let mut current_coord = origin_coord;
-
-        let shape = self.data.shape();
-        let x_range = 0..shape[0] as isize;
-        let y_range = 0..shape[1] as isize;
-
-        for _ in 0..distance {
-            current_coord += dir_coord;
-            if !(x_range.contains(&current_coord.x) && y_range.contains(&current_coord.y)) {
-                break;
-            }
-
-            let current_cell_type = self.data[[current_coord.x as usize, current_coord.y as usize]];
-            if current_cell_type == cell_type {
-                return current_coord;
-            }
-        }
-
-        origin_coord
     }
 
     pub fn set(&mut self, x: usize, y: usize, cell_type: CellType) {
@@ -81,27 +50,60 @@ impl Grid {
 
         for x in start..end {
             for y in start..end {
-                let neighbor = origin
+                let coord = origin
                     + Coord::<isize> {
                         x: x as isize,
                         y: y as isize,
                     };
                 if (x == 0 && y == 0)
-                    || neighbor.x < 0
-                    || neighbor.y < 0
-                    || neighbor.x as usize >= grid_size
-                    || neighbor.y as usize >= grid_size
+                    || coord.x < 0
+                    || coord.y < 0
+                    || coord.x as usize >= grid_size
+                    || coord.y as usize >= grid_size
                 {
                     continue;
                 }
 
-                if self.data[[neighbor.x as usize, neighbor.y as usize]] == cell_type {
-                    neighbors.push(neighbor);
+                if self.data[[coord.x as usize, coord.y as usize]] == cell_type {
+                    neighbors.push(coord);
                 }
             }
         }
 
         neighbors
+    }
+
+    pub fn get_area(&self, origin: Coord<isize>, radius: usize) -> Array2<CellType> {
+        let grid_size = self.data.dim().0;
+        let len = radius * 2 + 1;
+        let mut res = Array2::<CellType>::zeros((len, len));
+
+        let start = -(radius as isize);
+        let end = radius as isize + 1;
+
+        for x in start..end {
+            for y in start..end {
+                let coord = origin
+                    + Coord::<isize> {
+                        x: x as isize,
+                        y: y as isize,
+                    };
+                if coord.x < 0
+                    || coord.y < 0
+                    || coord.x as usize >= grid_size
+                    || coord.y as usize >= grid_size
+                {
+                    continue;
+                }
+
+                res[[
+                    (x + radius as isize) as usize,
+                    (y + radius as isize) as usize,
+                ]] = self.data[[coord.x as usize, coord.y as usize]];
+            }
+        }
+
+        res
     }
 }
 
@@ -110,53 +112,33 @@ mod grid_tests {
     use super::*;
 
     #[test]
-    fn test_search() {
-        let mut grid = Grid::new((100, 100));
-
-        let origin = Coord::<isize>::new(10, 10);
-        let target_coord = Coord::<isize>::new(12, 12);
-        grid.set(
-            target_coord.x as usize,
-            target_coord.y as usize,
-            CellType::Consumable,
-        );
-
-        let test_coord = grid.search_along_dir(
-            origin.x as usize,
-            origin.y as usize,
-            2,
-            Dir::NE,
-            CellType::Consumable,
-        );
-        assert_eq!(target_coord, test_coord);
-    }
-
-    #[test]
-    fn test_search_boundary() {
-        let grid = Grid::new((100, 100));
-
-        let origin = Coord::<isize>::new(0, 0);
-
-        let test_coord = grid.search_along_dir(
-            origin.x as usize,
-            origin.y as usize,
-            5,
-            Dir::NW,
-            CellType::Empty,
-        );
-        assert_eq!(origin, test_coord);
-    }
-
-    #[test]
     fn test_search_area() {
         let grid = Grid::new((100, 100));
-        let coord = Coord::<isize>::new(10, 10);
-        let neighbors = grid.search_area(coord, 1, CellType::Empty);
+        let origin = Coord::<isize>::new(10, 10);
+        let neighbors = grid.search_area(origin, 1, CellType::Empty);
         assert!(neighbors.len() == 8);
 
         let grid = Grid::new((100, 100));
-        let coord = Coord::<isize>::new(0, 0);
-        let neighbors = grid.search_area(coord, 1, CellType::Empty);
+        let origin = Coord::<isize>::new(0, 0);
+        let neighbors = grid.search_area(origin, 1, CellType::Empty);
         assert!(neighbors.len() == 3);
+    }
+
+    #[test]
+    fn test_get_area() {
+        let mut grid = Grid::new((100, 100));
+        let origin = Coord::<isize>::new(50, 50);
+
+        grid.set(50, 55, CellType::Consumable);
+        grid.set(55, 55, CellType::Consumable);
+        grid.set(46, 45, CellType::Impassable);
+
+        let area = grid.get_area(origin, 5);
+
+        assert_eq!(11 * 11, area.len());
+        assert_eq!(CellType::Consumable, area[[5, 10]]);
+        assert_eq!(CellType::Consumable, area[[10, 10]]);
+        assert_eq!(CellType::Impassable, area[[1, 0]]);
+        assert_eq!(CellType::Empty, area[[3, 2]]);
     }
 }

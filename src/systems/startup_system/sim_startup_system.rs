@@ -30,11 +30,11 @@ pub fn sim_startup_system(
     let params = Parameters {
         grid_size,
         n_initial_entities: 100,
-        n_initial_connections: 10,
-        n_initial_neurons: 5,
+        n_initial_connections: 25,
+        n_initial_neurons: 10,
         mutate_gene_proba: 0.1,
-        insert_gene_proba: 0.05,
-        delete_gene_proba: 0.03,
+        insert_gene_proba: 0.08,
+        delete_gene_proba: 0.05,
         lifespan: 15,
         cell_height,
         cell_width,
@@ -45,7 +45,7 @@ pub fn sim_startup_system(
     let (mut orgs, species, coords, mut grid) = init_world(params);
     orgs.iter_mut().for_each(|o| {
         o.genome
-            .set_gene_types(params.n_initial_connections, params.n_initial_neurons)
+            .set_gene_types(params.n_initial_connections, params.n_initial_neurons + SensorySystem::N_SENSORS)
     });
 
     for (org, coord) in orgs.iter().zip(coords.iter()) {

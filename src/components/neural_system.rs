@@ -18,7 +18,6 @@ pub struct NeuralSystem {
 }
 
 impl NeuralSystem {
-    pub const N_SENSORS: usize = 10;
     pub const ENERGY_COST: f32 = 1e-6;
 
     pub fn new(
@@ -162,8 +161,6 @@ impl NeuralSystem {
             self_connected_values.insert(*index, value);
         }
 
-        //let neurons_to_clear =
-        //&HashSet::<usize>::from_iter(self.nodes.iter().cloned()) - &self.sources;
         for index in self.nodes_to_clear.iter() {
             let neuron = self
                 .nn_graph
@@ -208,7 +205,7 @@ impl NeuralSystem {
             } else {
                 let mut walk = neighbors.detach();
 
-                let curr_neuron_value = if !self.sources.contains(index) {
+                let neuron_value = if !self.sources.contains(index) {
                     self.nn_graph.node_weight_mut(node).unwrap().fire()
                 } else {
                     self.nn_graph.node_weight(node).unwrap().value
@@ -217,7 +214,7 @@ impl NeuralSystem {
                 while let Some((edge, next_node)) = walk.next(&self.nn_graph) {
                     let edge_weight = *self.nn_graph.edge_weight(edge).unwrap();
                     let next_neuron = self.nn_graph.node_weight_mut(next_node).unwrap();
-                    next_neuron.value += edge_weight * curr_neuron_value;
+                    next_neuron.value += edge_weight * neuron_value;
                 }
             }
         }

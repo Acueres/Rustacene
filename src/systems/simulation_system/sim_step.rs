@@ -1,4 +1,3 @@
-use super::*;
 use crate::components::{Action, Coord, Organism};
 use crate::resources::*;
 use crate::systems::*;
@@ -18,6 +17,7 @@ pub fn sim_step(
     mut orgs_query: Query<(
         Entity,
         &mut Organism,
+        &SensorySystem,
         &mut NeuralSystem,
         &mut Coord<isize>,
         &mut Dir,
@@ -30,7 +30,9 @@ pub fn sim_step(
         let mut children = Vec::<(Organism, Coord<isize>)>::new();
         let mut pellets_to_remove = Vec::<Coord<isize>>::new();
 
-        for (e, mut org, mut ns, mut coord, mut curr_dir, mut transform) in orgs_query.iter_mut() {
+        for (e, mut org, ss, mut ns, mut coord, mut curr_dir, mut transform) in
+            orgs_query.iter_mut()
+        {
             //organism death
             if org.energy.is_sign_negative() {
                 grid.set(coord.x as usize, coord.y as usize, CellType::Empty);
@@ -40,15 +42,9 @@ pub fn sim_step(
                 continue;
             }
 
-            let inputs = read_sensors(
-                &org,
-                &coord.to_owned(),
-                &grid.to_owned(),
-                &params.to_owned(),
-                *curr_dir,
-            );
+            let sensor_data = ss.process_data(&grid, *coord, *curr_dir);
 
-            let action = ns.get_action(inputs);
+            let action = ns.get_action(sensor_data);
             org.sub_energy(NeuralSystem::ENERGY_COST); // thinking requires energy
 
             if action == Action::Halt {
