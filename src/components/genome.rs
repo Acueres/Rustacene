@@ -51,15 +51,7 @@ impl Genome {
         let mut distance = (self.genes.len() as f32 - other.genes.len() as f32).abs();
 
         for (g1, g2) in self.genes.iter().zip(other.genes.iter()) {
-            if g1.get_in_type() == g2.get_in_type()
-                && g1.get_out_type() == g2.get_out_type()
-                && g1.get_in_index() == g2.get_in_index()
-                && g1.get_out_index() == g2.get_out_index()
-            {
-                distance += (g1.get_conn_weight() - g2.get_conn_weight()).abs();
-            } else {
-                distance += 1.;
-            }
+            distance += g1.distance(*g2);
         }
 
         (distance / self.genes.len().max(other.genes.len()) as f32).clamp(0., 1.)

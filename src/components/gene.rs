@@ -76,7 +76,7 @@ impl Gene {
 
     /**Check if neuron is memory type*/
     #[inline]
-    pub fn is_memory(self) -> bool {
+    pub fn is_memory_neuron(self) -> bool {
         ((self.0 >> 27) & 1) as usize == 1
     }
 
@@ -86,11 +86,13 @@ impl Gene {
         ((self.0 >> 15) & 0xfff) as usize
     }
 
+    /**Flip bit at index*/
     #[inline]
     pub fn flip_bit(self, pos: usize) -> Self {
         Self(self.0 ^ (1 << pos))
     }
 
+    /**Set bit to value at index*/
     #[inline]
     pub fn set_bit(&mut self, pos: usize, value: usize) {
         if value == 1 {
@@ -98,6 +100,28 @@ impl Gene {
         } else {
             self.0 = self.0 & !(1 << pos);
         }
+    }
+
+    /**Calculate genetic distance*/
+    #[inline]
+    pub fn distance(self, other: Self) -> f32 {
+        if self.is_connection()
+            && other.is_connection()
+            && self.get_in_type() == other.get_in_type()
+            && self.get_out_type() == other.get_out_type()
+            && self.get_in_index() == other.get_in_index()
+            && self.get_out_index() == other.get_out_index()
+        {
+            return (self.get_conn_weight() - other.get_conn_weight()).abs();
+        } else if self.is_neuron()
+            && other.is_neuron()
+            && self.get_activation_type() == other.get_activation_type()
+            && self.is_memory_neuron() == other.is_memory_neuron()
+        {
+            return (self.get_neuron_weight() - other.get_neuron_weight()).abs();
+        }
+
+        return 1.;
     }
 }
 
@@ -143,7 +167,7 @@ mod tests {
         let index = gene.get_neuron_index();
         assert_eq!(index, 145);
 
-        let memory = gene.is_memory();
+        let memory = gene.is_memory_neuron();
         assert_eq!(memory, false);
 
         let activation = gene.get_activation_type();
