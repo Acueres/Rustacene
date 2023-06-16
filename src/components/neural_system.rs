@@ -31,7 +31,7 @@ impl NeuralSystem {
         let out_start = ns_shape.input + ns_shape.hidden;
 
         for _ in 0..ns_shape.input {
-            nn_graph.add_node(Neuron::new(0., Activation::Identity));
+            nn_graph.add_node(Neuron::new(0., Activation::None));
         }
 
         for (i, (is_memory, neuron)) in neurons.into_iter().enumerate() {

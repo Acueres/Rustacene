@@ -28,7 +28,7 @@ pub fn spawn_organism(
     let ss = SensorySystem::new(
         sensor_neurons
             .into_iter()
-            .map(|(_, _, neuron)| neuron.w)
+            .map(|(_, _, neuron)| (neuron.w - 0.5) * 2.)
             .collect(),
     );
 

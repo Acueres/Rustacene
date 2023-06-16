@@ -42,9 +42,8 @@ pub fn sim_step(
                 continue;
             }
 
-            let sensor_data = ss.process_data(&grid, *coord, *curr_dir);
-
-            let action = ns.get_action(sensor_data);
+            let sensors_out = ss.process_data(&grid, *coord, *curr_dir);
+            let action = ns.get_action(sensors_out);
             org.sub_energy(NeuralSystem::ENERGY_COST); // thinking requires energy
 
             if action == Action::Halt {
