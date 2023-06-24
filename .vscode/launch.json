@@ -7,7 +7,7 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'rustacene'",
+            "name": "Debug",
             "cargo": {
                 "args": [
                     "build",
@@ -25,7 +25,26 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'rustacene'",
+            "name": "Release",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--release",
+                    "--bin=rustacene",
+                    "--package=rustacene"
+                ],
+                "filter": {
+                    "name": "rustacene",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Test",
             "cargo": {
                 "args": [
                     "test",
