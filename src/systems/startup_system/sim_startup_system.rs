@@ -42,10 +42,12 @@ pub fn sim_startup_system(
 
     commands.insert_resource(params.clone());
 
-    let (mut orgs, species, coords, mut grid) = init_world(params);
+    let (mut orgs, species, coords, mut grid) = init_system(params);
     orgs.iter_mut().for_each(|o| {
-        o.genome
-            .set_gene_types(params.n_initial_connections, params.n_initial_neurons + SensorySystem::N_SENSORS)
+        o.genome.set_gene_types(
+            params.n_initial_connections,
+            params.n_initial_neurons + SensorySystem::N_SENSORS,
+        )
     });
 
     for (org, coord) in orgs.iter().zip(coords.iter()) {
