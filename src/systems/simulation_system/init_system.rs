@@ -4,7 +4,7 @@ use rand::Rng;
 
 const INITIAL_ENERGY: f32 = 0.2;
 
-pub fn init_world(params: Parameters) -> (Vec<Organism>, Species, Vec<Coord<isize>>, Grid) {
+pub fn init_system(params: Parameters) -> (Vec<Organism>, Species, Vec<Coord<isize>>, Grid) {
     let mut orgs = Vec::<Organism>::with_capacity(params.n_initial_entities * 3);
     let mut coords = Vec::<Coord<isize>>::with_capacity(params.n_initial_entities * 3);
 

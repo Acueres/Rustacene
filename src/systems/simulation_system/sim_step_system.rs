@@ -4,7 +4,7 @@ use crate::systems::*;
 use bevy::prelude::*;
 use rand::Rng;
 
-pub fn sim_step(
+pub fn sim_step_system(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,

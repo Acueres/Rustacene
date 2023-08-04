@@ -3,7 +3,7 @@ use crate::resources::*;
 use crate::systems::*;
 use bevy::prelude::*;
 
-pub fn reset_world(
+pub fn reset_system(
     params: Res<Parameters>,
     mut sim_state: ResMut<SimState>,
     mut commands: Commands,
@@ -19,7 +19,7 @@ pub fn reset_world(
         }
         commands.remove_resource::<Grid>();
 
-        let (mut orgs, new_species, coords, mut grid) = init_world(*params);
+        let (mut orgs, new_species, coords, mut grid) = init_system(*params);
         orgs.iter_mut().for_each(|o| {
             o.genome.set_gene_types(
                 params.n_initial_connections,
