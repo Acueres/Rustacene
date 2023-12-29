@@ -14,7 +14,7 @@ fn build_control_panel(commands: &mut Commands, asset_server: &Res<AssetServer>)
     let control_panel = commands
         .spawn(NodeBundle {
             style: Style {
-                size: Size::new(Val::Percent(100.0), Val::Percent(10.0)),
+                size: Size::new(Val::Percent(20.0), Val::Percent(10.0)),
                 justify_content: JustifyContent::FlexStart,
                 flex_direction: FlexDirection::Row,
                 ..default()
@@ -129,7 +129,7 @@ fn build_info_panel(commands: &mut Commands, asset_server: &Res<AssetServer>) ->
     commands
         .spawn(NodeBundle {
             style: Style {
-                size: Size::width(Val::Percent(20.0)),
+                size: Size::width(Val::Percent(50.0)),
                 justify_content: JustifyContent::SpaceEvenly,
                 flex_direction: FlexDirection::Column,
                 ..default()
@@ -370,7 +370,7 @@ fn build_species_panel(commands: &mut Commands, asset_server: &Res<AssetServer>)
     commands
         .spawn(NodeBundle {
             style: Style {
-                size: Size::width(Val::Percent(20.0)),
+                size: Size::width(Val::Percent(50.0)),
                 justify_content: JustifyContent::SpaceEvenly,
                 flex_direction: FlexDirection::Column,
                 ..default()
