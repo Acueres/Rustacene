@@ -4,9 +4,6 @@ use bevy::prelude::Component;
 pub struct GameMenu;
 
 #[derive(Component)]
-pub struct ControlPanel;
-
-#[derive(Component)]
 pub struct EpochText;
 
 #[derive(Component)]
