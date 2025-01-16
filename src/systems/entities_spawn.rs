@@ -1,6 +1,7 @@
 use crate::components::*;
 use crate::resources::Parameters;
-use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
+use bevy::prelude::*;
+use bevy_color::palettes::css::GREEN;
 use rand::Rng;
 
 pub fn spawn_organism(
@@ -55,24 +56,13 @@ pub fn spawn_organism(
         ns,
         coord.to_owned(),
         dir,
-        MaterialMesh2dBundle {
-            mesh: meshes
-                .add(
-                    shape::Quad::new(Vec2 {
-                        x: params.cell_width,
-                        y: params.cell_width,
-                    })
-                    .into(),
-                )
-                .into(),
-            material: materials.add(ColorMaterial::from(color)),
-            transform: Transform::from_translation(Vec3::new(
-                (coord.x as f32) * params.cell_width,
-                (coord.y as f32) * params.cell_height,
-                0.,
-            )),
-            ..default()
-        },
+        Mesh2d(meshes.add(Rectangle::new(params.cell_width, params.cell_width))),
+        MeshMaterial2d(materials.add(ColorMaterial::from(color))),
+        Transform::from_translation(Vec3::new(
+            (coord.x as f32) * params.cell_width,
+            (coord.y as f32) * params.cell_height,
+            0.,
+        )),
     ));
 }
 
@@ -87,23 +77,12 @@ pub fn spawn_pellet(
     commands.spawn((
         Pellet,
         coord.to_owned(),
-        MaterialMesh2dBundle {
-            mesh: meshes
-                .add(
-                    shape::Quad::new(Vec2 {
-                        x: cell_width,
-                        y: cell_width,
-                    })
-                    .into(),
-                )
-                .into(),
-            material: materials.add(ColorMaterial::from(Color::GREEN)),
-            transform: Transform::from_translation(Vec3::new(
-                (coord.x as f32) * cell_width,
-                (coord.y as f32) * cell_height,
-                0.,
-            )),
-            ..default()
-        },
+        Mesh2d(meshes.add(Rectangle::new(cell_width, cell_width))),
+        MeshMaterial2d(materials.add(ColorMaterial::from(Color::Srgba(GREEN)))),
+        Transform::from_translation(Vec3::new(
+            (coord.x as f32) * cell_width,
+            (coord.y as f32) * cell_height,
+            0.,
+        )),
     ));
 }

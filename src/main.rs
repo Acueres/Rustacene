@@ -14,6 +14,6 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugin(sim::SimPlugin)
+        .add_plugins(sim::SimPlugin)
         .run();
 }

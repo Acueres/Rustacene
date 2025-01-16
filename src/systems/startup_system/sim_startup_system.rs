@@ -1,6 +1,6 @@
 use super::*;
-use bevy::core_pipeline::clear_color::ClearColorConfig;
 use bevy::window::PrimaryWindow;
+use bevy_color::palettes::css::MIDNIGHT_BLUE;
 
 pub fn sim_startup_system(
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
@@ -11,17 +11,14 @@ pub fn sim_startup_system(
     let mut window = window_query.get_single_mut().unwrap();
     window.resizable = false;
 
-    commands.spawn(Camera2dBundle {
-        camera_2d: Camera2d {
-            clear_color: ClearColorConfig::Custom(Color::MIDNIGHT_BLUE),
+    commands.spawn((
+        Camera2d,
+        Camera {
+            hdr: true,
+            clear_color: ClearColorConfig::Custom(Color::Srgba(MIDNIGHT_BLUE)),
+            ..default()
         },
-        transform: Transform::from_translation(Vec3::new(
-            window.width() / 2.,
-            window.height() / 2.,
-            0.,
-        )),
-        ..Default::default()
-    });
+    ));
 
     let grid_size: usize = 500;
     let cell_width = window.width() / grid_size as f32;

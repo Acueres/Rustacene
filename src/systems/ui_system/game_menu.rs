@@ -1,5 +1,6 @@
 use crate::components::ui::*;
 use bevy::prelude::*;
+use bevy_color::palettes::css::WHITE;
 
 pub fn build_game_menu(commands: &mut Commands, asset_server: &Res<AssetServer>) -> Entity {
     //TODO: add more ui elements
@@ -12,371 +13,132 @@ fn build_control_panel(commands: &mut Commands, asset_server: &Res<AssetServer>)
     let species = build_species_panel(commands, asset_server);
 
     let control_panel = commands
-        .spawn(NodeBundle {
-            style: Style {
-                size: Size::new(Val::Percent(20.0), Val::Percent(10.0)),
-                justify_content: JustifyContent::FlexStart,
-                flex_direction: FlexDirection::Row,
-                ..default()
-            },
-            background_color: Color::DARK_GRAY.into(),
+        .spawn(Node {
+            width: Val::Percent(20.0),
+            height: Val::Percent(10.0),
+            justify_content: JustifyContent::FlexStart,
+            flex_direction: FlexDirection::Row,
             ..default()
         })
-        .push_children(&[info, species])
+        .add_children(&[info, species])
         .id();
 
     commands
-        .spawn(NodeBundle {
-            style: Style {
-                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
-                justify_content: JustifyContent::FlexEnd,
-                flex_direction: FlexDirection::Column,
-                ..default()
-            },
+        .spawn(Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            justify_content: JustifyContent::FlexEnd,
+            flex_direction: FlexDirection::Column,
             ..default()
         })
-        .push_children(&[control_panel])
+        .add_children(&[control_panel])
         .id()
 }
 
 fn build_info_panel(commands: &mut Commands, asset_server: &Res<AssetServer>) -> Entity {
     let info_label = commands
         .spawn((
-            TextBundle::from_section(
-                "Sim Info",
-                TextStyle {
-                    font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                    font_size: 20.0,
-                    color: Color::WHITE,
-                },
-            ),
+            Text::new("Sim Info"),
+            TextFont {
+                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                font_size: 20.0,
+                ..default()
+            },
             Label,
         ))
         .id();
 
     let epoch = commands
         .spawn((
-            TextBundle::from_sections([
-                TextSection::new(
-                    "Epoch: ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: 16.0,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: 16.0,
-                        color: Color::WHITE,
-                    },
-                ),
-            ]),
+            Text::new(""),
+            TextFont {
+                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                font_size: 16.0,
+                ..default()
+            },
             EpochText,
         ))
         .id();
 
     let population = commands
         .spawn((
-            TextBundle::from_sections([
-                TextSection::new(
-                    "Population: ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: 16.0,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: 16.0,
-                        color: Color::WHITE,
-                    },
-                ),
-            ]),
+            Text::new(""),
+            TextFont {
+                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                font_size: 16.0,
+                ..default()
+            },
             PopulationText,
         ))
         .id();
 
     let energy = commands
         .spawn((
-            TextBundle::from_sections([
-                TextSection::new(
-                    "Energy: ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: 16.0,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: 16.0,
-                        color: Color::WHITE,
-                    },
-                ),
-            ]),
+            Text::new(""),
+            TextFont {
+                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                font_size: 16.0,
+                ..default()
+            },
             EnergyText,
         ))
         .id();
 
     commands
-        .spawn(NodeBundle {
-            style: Style {
-                size: Size::width(Val::Percent(50.0)),
-                justify_content: JustifyContent::SpaceEvenly,
-                flex_direction: FlexDirection::Column,
-                ..default()
-            },
+        .spawn(Node {
+            width: Val::Percent(50.0),
+            justify_content: JustifyContent::SpaceEvenly,
+            flex_direction: FlexDirection::Column,
             ..default()
         })
-        .push_children(&[info_label, epoch, population, energy])
+        .add_children(&[info_label, epoch, population, energy])
         .id()
 }
 
 fn build_species_panel(commands: &mut Commands, asset_server: &Res<AssetServer>) -> Entity {
-    const TEXT_SIZE: f32 = 14.0;
-
     let info_label = commands
         .spawn((
-            TextBundle::from_sections([
-                TextSection::new(
-                    "Total Species: ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: 20.0,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: 20.0,
-                        color: Color::WHITE,
-                    },
-                ),
-            ]),
+            Text::new(""),
+            TextFont {
+                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                font_size: 20.0,
+                ..default()
+            },
             TotalSpeciesText,
         ))
         .id();
 
-    let species1 = commands
-        .spawn((
-            TextBundle::from_sections([
-                TextSection::new(
-                    "Species ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    " : ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-            ]),
-            SpeciesText,
-        ))
-        .id();
-
-    let species2 = commands
-        .spawn((
-            TextBundle::from_sections([
-                TextSection::new(
-                    "Species ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    " : ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-            ]),
-            SpeciesText,
-        ))
-        .id();
-
-    let species3 = commands
-        .spawn((
-            TextBundle::from_sections([
-                TextSection::new(
-                    "Species ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    " : ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-            ]),
-            SpeciesText,
-        ))
-        .id();
-
-    let species4 = commands
-        .spawn((
-            TextBundle::from_sections([
-                TextSection::new(
-                    "Species ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    " : ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-            ]),
-            SpeciesText,
-        ))
-        .id();
-
-    let species5 = commands
-        .spawn((
-            TextBundle::from_sections([
-                TextSection::new(
-                    "Species ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    " : ",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-                TextSection::new(
-                    "",
-                    TextStyle {
-                        font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                        font_size: TEXT_SIZE,
-                        color: Color::WHITE,
-                    },
-                ),
-            ]),
-            SpeciesText,
-        ))
-        .id();
+    let children = &[
+        info_label,
+        spawn_species_label(commands, asset_server),
+        spawn_species_label(commands, asset_server),
+        spawn_species_label(commands, asset_server),
+        spawn_species_label(commands, asset_server),
+        spawn_species_label(commands, asset_server),
+    ];
 
     commands
-        .spawn(NodeBundle {
-            style: Style {
-                size: Size::width(Val::Percent(50.0)),
-                justify_content: JustifyContent::SpaceEvenly,
-                flex_direction: FlexDirection::Column,
-                ..default()
-            },
+        .spawn(Node {
+            width: Val::Percent(50.0),
+            justify_content: JustifyContent::SpaceEvenly,
+            flex_direction: FlexDirection::Column,
             ..default()
         })
-        .push_children(&[info_label, species1, species2, species3, species4, species5])
+        .add_children(children)
+        .id()
+}
+
+fn spawn_species_label(commands: &mut Commands, asset_server: &Res<AssetServer>) -> Entity {
+    commands
+        .spawn((
+            Text::new(""),
+            TextFont {
+                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
+                font_size: 14.0,
+                ..default()
+            },
+            TextColor(WHITE.into()),
+            SpeciesText,
+        ))
         .id()
 }

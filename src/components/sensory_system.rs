@@ -40,7 +40,7 @@ impl SensorySystem {
                 );
 
                 let angle = Vec2::new(coord.x as f32, coord.y as f32)
-                    .angle_between(Vec2::new(dir_coord.x as f32, dir_coord.y as f32));
+                    .angle_to(Vec2::new(dir_coord.x as f32, dir_coord.y as f32));
 
                 if angle.abs() > self.fov_angle {
                     continue;

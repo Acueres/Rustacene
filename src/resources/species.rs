@@ -157,7 +157,7 @@ impl Species {
     #[inline]
     pub fn get_color(&self, species: usize) -> Color {
         if let Some(color) = self.color_map.get(&species) {
-            return Color::rgb_u8(color.0, color.1, color.2);
+            return Color::srgb_u8(color.0, color.1, color.2);
         }
 
         Color::WHITE

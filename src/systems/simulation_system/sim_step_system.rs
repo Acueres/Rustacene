@@ -23,7 +23,7 @@ pub fn sim_step_system(
         &mut Dir,
         &mut Transform,
     )>,
-    pellets_query: Query<(Entity, &Coord<isize>, With<Pellet>, Without<Organism>)>,
+    pellets_query: Query<(Entity, &Coord<isize>), (With<Pellet>, Without<Organism>)>,
 ) {
     if !sim_state.paused && !sim_state.reset && sim_time.timer.tick(time.delta()).just_finished() {
         let mut rng = rand::thread_rng();
@@ -104,7 +104,7 @@ pub fn sim_step_system(
         }
 
         while let Some(pellet_coord) = pellets_to_remove.pop() {
-            for (e, coord, _, _) in pellets_query.iter() {
+            for (e, coord) in pellets_query.iter() {
                 if *coord == pellet_coord {
                     commands.entity(e).despawn_recursive();
                 }

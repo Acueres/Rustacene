@@ -5,7 +5,7 @@ use bevy::utils::Duration;
 
 pub fn input_system(
     mut camera_query: Query<&mut Transform, With<Camera>>,
-    keys: Res<Input<KeyCode>>,
+    keys: Res<ButtonInput<KeyCode>>,
     mut scroll_events: EventReader<MouseWheel>,
     time: Res<Time>,
     mut sim_time: ResMut<SimTime>,
@@ -15,33 +15,33 @@ pub fn input_system(
     if keys.just_pressed(KeyCode::Space) {
         sim_state.paused ^= true;
     }
-    if keys.just_pressed(KeyCode::R) {
+    if keys.just_pressed(KeyCode::KeyR) {
         sim_state.reset = true;
     }
 
     //sim speed control
-    if keys.just_pressed(KeyCode::Key1) {
+    if keys.just_pressed(KeyCode::Digit1) {
         sim_time.timer.set_duration(Duration::from_secs_f32(0.1));
         epoch_time.timer.set_duration(Duration::from_secs_f32(10.));
     }
-    if keys.just_pressed(KeyCode::Key2) {
+    if keys.just_pressed(KeyCode::Digit2) {
         sim_time.timer.set_duration(Duration::from_secs_f32(0.05));
         epoch_time.timer.set_duration(Duration::from_secs_f32(5.));
     }
-    if keys.just_pressed(KeyCode::Key3) {
+    if keys.just_pressed(KeyCode::Digit3) {
         sim_time.timer.set_duration(Duration::from_secs_f32(0.025));
         epoch_time.timer.set_duration(Duration::from_secs_f32(2.5));
     }
 
     //camera zoom
     let mut camera = camera_query.get_single_mut().unwrap();
-    for ev in scroll_events.iter() {
+    for ev in scroll_events.read() {
         let mut log_scale = Vec3 {
             x: camera.scale.x.ln(),
             y: camera.scale.y.ln(),
             z: camera.scale.z.ln(),
         };
-        log_scale -= 5. * ev.y.signum() * time.delta_seconds();
+        log_scale -= 5. * ev.y.signum() * time.delta_secs();
         camera.scale = log_scale.exp();
         camera.scale = camera.scale.clamp(
             Vec3 {
@@ -58,20 +58,20 @@ pub fn input_system(
     }
 
     let scale_factor = 1.2 - camera.scale.x;
-    let delta = 5e2 * scale_factor * time.delta_seconds();
+    let delta = 5e2 * scale_factor * time.delta_secs();
     let mut camera_delta_y = 0.;
     let mut camera_delta_x = 0.;
 
-    if keys.pressed(KeyCode::W) {
+    if keys.pressed(KeyCode::KeyW) {
         camera_delta_y += delta;
     }
-    if keys.pressed(KeyCode::S) {
+    if keys.pressed(KeyCode::KeyS) {
         camera_delta_y -= delta;
     }
-    if keys.pressed(KeyCode::D) {
+    if keys.pressed(KeyCode::KeyD) {
         camera_delta_x += delta;
     }
-    if keys.pressed(KeyCode::A) {
+    if keys.pressed(KeyCode::KeyA) {
         camera_delta_x -= delta;
     }
 

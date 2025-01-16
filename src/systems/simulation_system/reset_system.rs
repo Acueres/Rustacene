@@ -11,7 +11,7 @@ pub fn reset_system(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut species: ResMut<Species>,
     orgs_query: Query<(Entity, &Organism)>,
-    pellets_query: Query<(Entity, With<Pellet>, Without<Organism>)>,
+    pellets_query: Query<(Entity, &Pellet)>,
 ) {
     if sim_state.reset {
         for (e, _) in orgs_query.iter() {
@@ -40,7 +40,7 @@ pub fn reset_system(
             );
         }
 
-        for (e, _, _) in pellets_query.iter() {
+        for (e, _,) in pellets_query.iter() {
             commands.entity(e).despawn_recursive();
         }
 
