@@ -36,7 +36,7 @@ pub fn epoch_system(
                 grid.set(coord.x as usize, coord.y as usize, CellType::Empty);
                 species.decrement_species(org.species);
 
-                commands.entity(e).despawn_recursive();
+                commands.entity(e).despawn();
                 continue;
             } else {
                 total_orgs_energy += org.energy;

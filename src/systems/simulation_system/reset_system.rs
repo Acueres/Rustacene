@@ -15,7 +15,7 @@ pub fn reset_system(
 ) {
     if sim_state.reset {
         for (e, _) in orgs_query.iter() {
-            commands.entity(e).despawn_recursive();
+            commands.entity(e).despawn();
         }
         commands.remove_resource::<Grid>();
 
@@ -41,7 +41,7 @@ pub fn reset_system(
         }
 
         for (e, _,) in pellets_query.iter() {
-            commands.entity(e).despawn_recursive();
+            commands.entity(e).despawn();
         }
 
         let pellet_coords = energy_system(orgs.iter().map(|org| org.energy).sum::<f32>(), &grid);

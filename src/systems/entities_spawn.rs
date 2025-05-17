@@ -1,7 +1,7 @@
 use crate::components::*;
 use crate::resources::Parameters;
 use bevy::prelude::*;
-use bevy_color::palettes::css::GREEN;
+use bevy::color::palettes::css::GREEN;
 use rand::Rng;
 
 pub fn spawn_organism(

@@ -1,7 +1,7 @@
 use crate::resources::*;
 use bevy::input::mouse::MouseWheel;
 use bevy::prelude::*;
-use bevy::utils::Duration;
+use std::time::Duration;
 
 pub fn input_system(
     mut camera_query: Query<&mut Transform, With<Camera>>,
@@ -34,7 +34,7 @@ pub fn input_system(
     }
 
     //camera zoom
-    let mut camera = camera_query.get_single_mut().unwrap();
+    let mut camera = camera_query.single_mut().unwrap();
     for ev in scroll_events.read() {
         let mut log_scale = Vec3 {
             x: camera.scale.x.ln(),

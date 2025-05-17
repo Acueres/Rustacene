@@ -1,6 +1,6 @@
 use super::*;
 use bevy::window::PrimaryWindow;
-use bevy_color::palettes::css::MIDNIGHT_BLUE;
+use bevy::color::palettes::css::MIDNIGHT_BLUE;
 
 pub fn sim_startup_system(
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
@@ -8,7 +8,7 @@ pub fn sim_startup_system(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let mut window = window_query.get_single_mut().unwrap();
+    let mut window = window_query.single_mut().unwrap();
     window.resizable = false;
 
     commands.spawn((

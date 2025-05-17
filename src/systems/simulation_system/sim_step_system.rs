@@ -38,7 +38,7 @@ pub fn sim_step_system(
                 grid.set(coord.x as usize, coord.y as usize, CellType::Empty);
                 species.decrement_species(org.species);
 
-                commands.entity(e).despawn_recursive();
+                commands.entity(e).despawn();
                 continue;
             }
 
@@ -106,7 +106,7 @@ pub fn sim_step_system(
         while let Some(pellet_coord) = pellets_to_remove.pop() {
             for (e, coord) in pellets_query.iter() {
                 if *coord == pellet_coord {
-                    commands.entity(e).despawn_recursive();
+                    commands.entity(e).despawn();
                 }
             }
         }

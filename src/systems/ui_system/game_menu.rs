@@ -1,6 +1,6 @@
 use crate::components::ui::*;
 use bevy::prelude::*;
-use bevy_color::palettes::css::WHITE;
+use bevy::color::palettes::css::WHITE;
 
 pub fn build_game_menu(commands: &mut Commands, asset_server: &Res<AssetServer>) -> Entity {
     //TODO: add more ui elements
