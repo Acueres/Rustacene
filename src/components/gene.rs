@@ -1,6 +1,6 @@
 use super::Activation;
 use rand::{
-    distributions::{Distribution, Standard},
+    distr::{Distribution, StandardUniform},
     Rng,
 };
 
@@ -125,9 +125,9 @@ impl Gene {
     }
 }
 
-impl Distribution<Gene> for Standard {
+impl Distribution<Gene> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Gene {
-        Gene(rng.gen())
+        Gene(rng.random())
     }
 }
 

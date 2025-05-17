@@ -1,5 +1,4 @@
 use super::Dir;
-use rand::Rng;
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum Action {
@@ -17,7 +16,7 @@ impl Action {
     pub fn get_dir(self, curr_dir: Dir) -> Dir {
         match self {
             Self::MoveContinue => curr_dir,
-            Self::MoveRandom => rand::thread_rng().gen(),
+            Self::MoveRandom => rand::random(),
             Self::MoveReverse => -curr_dir,
             Self::Rotate => curr_dir.rotate(),
             Self::RotateCounter => curr_dir.rotate_counter(),

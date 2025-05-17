@@ -1,7 +1,7 @@
 use super::Coord;
 use bevy::prelude::Component;
 use rand::{
-    distributions::{Distribution, Standard},
+    distr::{Distribution, StandardUniform},
     Rng,
 };
 use std::ops::Neg;
@@ -18,9 +18,9 @@ pub enum Dir {
     SW,
 }
 
-impl Distribution<Dir> for Standard {
+impl Distribution<Dir> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Dir {
-        match rng.gen_range(0..8) {
+        match rng.random_range(0..8) {
             0 => Dir::N,
             1 => Dir::S,
             2 => Dir::E,

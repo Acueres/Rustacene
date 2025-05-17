@@ -26,7 +26,7 @@ pub fn sim_step_system(
     pellets_query: Query<(Entity, &Coord<isize>), (With<Pellet>, Without<Organism>)>,
 ) {
     if !sim_state.paused && !sim_state.reset && sim_time.timer.tick(time.delta()).just_finished() {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut children = Vec::<(Organism, Coord<isize>)>::new();
         let mut pellets_to_remove = Vec::<Coord<isize>>::new();
 
@@ -118,7 +118,7 @@ pub fn sim_step_system(
                 continue;
             }
 
-            let child_coord = nearby_coords[rng.gen_range(0..nearby_coords.len())];
+            let child_coord = nearby_coords[rng.random_range(0..nearby_coords.len())];
 
             grid.set(
                 child_coord.x as usize,

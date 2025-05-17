@@ -8,9 +8,9 @@ pub struct Genome {
 
 impl Genome {
     pub fn new(len: usize) -> Self {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         Self {
-            genes: (0..len).map(|_| rng.gen::<Gene>()).collect(),
+            genes: (0..len).map(|_| rng.random::<Gene>()).collect(),
         }
     }
 
@@ -20,27 +20,27 @@ impl Genome {
     }
 
     pub fn replicate(&self, mut_p: f64, insert_p: f64, delete_p: f64) -> Self {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut child_genes = self.genes.clone();
         let genome_len = child_genes.len();
 
-        if rng.gen_bool(mut_p) {
-            let index = rng.gen_range(0..genome_len);
+        if rng.random_bool(mut_p) {
+            let index = rng.random_range(0..genome_len);
             child_genes[index] =
-                child_genes[index].flip_bit(rng.gen_range(0..i32::BITS - 1) as usize);
+                child_genes[index].flip_bit(rng.random_range(0..i32::BITS - 1) as usize);
         }
 
-        if rng.gen_bool(insert_p) {
-            let index = rng.gen_range(0..=genome_len);
+        if rng.random_bool(insert_p) {
+            let index = rng.random_range(0..=genome_len);
             if index == genome_len {
-                child_genes.push(rng.gen());
+                child_genes.push(rng.random());
             } else {
-                child_genes.insert(index, rng.gen());
+                child_genes.insert(index, rng.random());
             }
         }
 
-        if rng.gen_bool(delete_p) {
-            let index = rng.gen_range(0..genome_len);
+        if rng.random_bool(delete_p) {
+            let index = rng.random_range(0..genome_len);
             child_genes.remove(index);
         }
 

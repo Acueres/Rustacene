@@ -10,12 +10,12 @@ pub fn init_system(params: Parameters) -> (Vec<Organism>, Species, Vec<Coord<isi
 
     let mut grid = Grid::new((params.grid_size, params.grid_size));
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let mut n = 0;
     while n < params.n_initial_entities {
-        let x = rng.gen_range(0..params.grid_size);
-        let y = rng.gen_range(0..params.grid_size);
+        let x = rng.random_range(0..params.grid_size);
+        let y = rng.random_range(0..params.grid_size);
 
         if grid.get(x, y) == CellType::Impassable {
             continue;

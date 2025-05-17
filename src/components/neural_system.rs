@@ -4,7 +4,7 @@ use petgraph::graph::NodeIndex;
 use petgraph::stable_graph::StableGraph;
 use petgraph::visit::{DfsPostOrder, Reversed};
 use petgraph::Direction;
-use rand::prelude::SliceRandom;
+use rand::prelude::IndexedRandom;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Component, Clone)]
@@ -119,7 +119,7 @@ impl NeuralSystem {
     }
 
     pub fn get_action(&mut self, input: Vec<f32>) -> Action {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         let probas: Vec<_> = self
             .forward(&input)
@@ -290,7 +290,7 @@ mod tests {
             Connection::new(0.4, ConnectionType::Internal, 2, 1).renumber(&ns_shape),
             Connection::new(0.5, ConnectionType::Out, 0, 0).renumber(&ns_shape),
         ];
-        connections.shuffle(&mut rand::thread_rng());
+        connections.shuffle(&mut rand::rng());
 
         let mut ns = NeuralSystem::new(&neurons, &connections, ns_shape);
         assert_eq!(2, ns.sources.len());
@@ -408,7 +408,7 @@ mod tests {
             Connection::new(1., ConnectionType::In, 3, 3).renumber(&ns_shape),
         ];
         //ensure connections ordering doesn't matter
-        connections.shuffle(&mut rand::thread_rng());
+        connections.shuffle(&mut rand::rng());
 
         let ns = NeuralSystem::new(&neurons, &connections, ns_shape);
 

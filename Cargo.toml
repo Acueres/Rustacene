@@ -1,15 +1,15 @@
 [package]
 name = "rustacene"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 build = "src/build.rs"
 
 [dependencies]
 bevy = "0.16"
-rand = "0.8.5"
-ndarray = "0.15.6"
-petgraph = "0.6.2"
-num-traits = "0.2.15"
+rand = "0.9.1"
+ndarray = "0.16.1"
+petgraph = "0.8.1"
+num-traits = "0.2.19"
 
 [profile.release]
 opt-level = 3

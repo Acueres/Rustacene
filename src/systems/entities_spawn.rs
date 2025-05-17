@@ -2,7 +2,6 @@ use crate::components::*;
 use crate::resources::Parameters;
 use bevy::prelude::*;
 use bevy::color::palettes::css::GREEN;
-use rand::Rng;
 
 pub fn spawn_organism(
     commands: &mut Commands,
@@ -13,7 +12,7 @@ pub fn spawn_organism(
     color: Color,
     params: &Parameters,
 ) {
-    let dir: Dir = rand::thread_rng().gen();
+    let dir: Dir = rand::random();
 
     let (conn_genes, neuron_genes): (Vec<Gene>, Vec<Gene>) =
         org.genome.iter().partition(|g| g.is_connection());

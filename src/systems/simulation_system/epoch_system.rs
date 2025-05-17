@@ -18,7 +18,7 @@ pub fn epoch_system(
 ) {
     if !sim_state.paused && !sim_state.reset && epoch_time.timer.tick(time.delta()).just_finished()
     {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut total_orgs_energy: f32 = 0.;
 
         sim_state.epoch += 1;
@@ -30,7 +30,7 @@ pub fn epoch_system(
             org.age += 1;
 
             if org.age > params.lifespan
-                && rng.gen_bool((org.age as f64 / params.lifespan as f64 - 1.).clamp(0., 1.))
+                && rng.random_bool((org.age as f64 / params.lifespan as f64 - 1.).clamp(0., 1.))
             {
                 n_entities -= 1;
                 grid.set(coord.x as usize, coord.y as usize, CellType::Empty);

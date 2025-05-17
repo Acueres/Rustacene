@@ -15,7 +15,7 @@ pub struct Species {
 
 impl Species {
     pub fn new(species: HashSet<usize>) -> Self {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut colors = HashSet::<(u8, u8, u8)>::with_capacity(species.len());
         let species_count = species.len();
 
@@ -23,9 +23,9 @@ impl Species {
 
         while colors.len() < species_count {
             colors.insert((
-                rng.gen_range(0..u8::MAX),
-                rng.gen_range(0..u8::MAX),
-                rng.gen_range(0..u8::MAX),
+                rng.random_range(0..u8::MAX),
+                rng.random_range(0..u8::MAX),
+                rng.random_range(0..u8::MAX),
             ));
         }
 
@@ -110,12 +110,12 @@ impl Species {
             self.species_count += 1;
             self.population_count.insert(species, 0);
 
-            let mut rng = rand::thread_rng();
+            let mut rng = rand::rng();
             loop {
                 let color = (
-                    rng.gen_range(0..u8::MAX),
-                    rng.gen_range(0..u8::MAX),
-                    rng.gen_range(0..u8::MAX),
+                    rng.random_range(0..u8::MAX),
+                    rng.random_range(0..u8::MAX),
+                    rng.random_range(0..u8::MAX),
                 );
                 if self.colors.insert(color) {
                     self.color_map.insert(species, color);

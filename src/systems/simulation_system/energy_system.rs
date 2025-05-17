@@ -1,11 +1,11 @@
 use crate::components::*;
 use crate::resources::Grid;
-use rand::seq::SliceRandom;
+use rand::seq::IndexedRandom;
 
 const MAX_ENERGY: f32 = 100.;
 
 pub fn energy_system(total_org_energy: f32, grid: &Grid) -> Vec<Coord<isize>> {
-    let rng = &mut rand::thread_rng();
+    let rng = &mut rand::rng();
     let total_pellet_energy =
         grid.get_cell_coords(CellType::Consumable).iter().len() as f32 * PELLET_ENERGY;
     let total_energy = total_org_energy + total_pellet_energy;
