@@ -14,7 +14,6 @@ pub fn sim_startup_system(
     commands.spawn((
         Camera2d,
         Camera {
-            hdr: true,
             clear_color: ClearColorConfig::Custom(Color::Srgba(MIDNIGHT_BLUE)),
             ..default()
         },

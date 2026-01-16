@@ -6,7 +6,7 @@ use std::time::Duration;
 pub fn input_system(
     mut camera_query: Query<&mut Transform, With<Camera>>,
     keys: Res<ButtonInput<KeyCode>>,
-    mut scroll_events: EventReader<MouseWheel>,
+    mut scroll_events: MessageReader<MouseWheel>,
     time: Res<Time>,
     mut sim_time: ResMut<SimTime>,
     mut epoch_time: ResMut<EpochTime>,
