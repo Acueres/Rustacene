@@ -54,11 +54,7 @@ fn sigmoid(v: f32) -> f32 {
 
 #[inline]
 fn relu(v: f32) -> f32 {
-    if v <= 0. {
-        0.
-    } else {
-        1.
-    }
+    v.max(0.0)
 }
 
 #[inline]

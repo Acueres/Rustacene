@@ -1,9 +1,9 @@
 use super::*;
 use bevy::prelude::Component;
+use petgraph::Direction;
 use petgraph::graph::NodeIndex;
 use petgraph::stable_graph::StableGraph;
 use petgraph::visit::{DfsPostOrder, Reversed};
-use petgraph::Direction;
 use rand::prelude::IndexedRandom;
 use std::collections::{HashMap, HashSet};
 
@@ -13,6 +13,7 @@ pub struct NeuralSystem {
     nn_graph: StableGraph<Neuron, f32>,
     nodes: Vec<usize>,
     sources: HashSet<usize>,
+    memory_neurons: HashSet<usize>,
     nodes_to_clear: HashSet<usize>,
     self_connected: HashSet<usize>,
 }
@@ -27,7 +28,7 @@ impl NeuralSystem {
     ) -> Self {
         let mut nn_graph =
             StableGraph::<Neuron, f32>::with_capacity(ns_shape.n_neurons, connections.len());
-        let mut memory_nodes = HashSet::<usize>::new();
+        let mut memory_neurons = HashSet::<usize>::new();
         let out_start = ns_shape.input + ns_shape.hidden;
 
         for _ in 0..ns_shape.input {
@@ -36,7 +37,7 @@ impl NeuralSystem {
 
         for (i, (is_memory, neuron)) in neurons.into_iter().enumerate() {
             if *is_memory {
-                memory_nodes.insert(ns_shape.input + i);
+                memory_neurons.insert(ns_shape.input + i);
             }
             nn_graph.add_node(*neuron);
         }
@@ -106,13 +107,14 @@ impl NeuralSystem {
         }
 
         let nodes_to_clear =
-            &(&HashSet::<usize>::from_iter(nodes.iter().cloned()) - &sources) - &memory_nodes;
+            &(&HashSet::<usize>::from_iter(nodes.iter().cloned()) - &sources) - &memory_neurons;
 
         Self {
             ns_shape,
             nn_graph,
             nodes,
             sources,
+            memory_neurons,
             nodes_to_clear,
             self_connected,
         }
@@ -125,7 +127,7 @@ impl NeuralSystem {
             .forward(&input)
             .iter()
             .enumerate()
-            .map(|(i, p)| (i, if p.is_sign_negative() { 0. } else { *p }))
+            .map(|(i, o)| (i, ((o + 1.0) * 0.5).clamp(0.0, 1.0) + 1e-3))
             .collect();
 
         let action_index = probas
@@ -139,10 +141,15 @@ impl NeuralSystem {
     pub fn forward(&mut self, input: &Vec<f32>) -> Vec<f32> {
         //set sensors, reset internal sources
         for index in self.sources.iter() {
+            if self.memory_neurons.contains(index) {
+                continue;
+            }
+
             let source_neuron = self
                 .nn_graph
                 .node_weight_mut(NodeIndex::new(*index))
                 .unwrap();
+
             source_neuron.value = if (0..self.ns_shape.input).contains(index) {
                 input[*index]
             } else {
