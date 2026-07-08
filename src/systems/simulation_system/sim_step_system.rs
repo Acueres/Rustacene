@@ -2,7 +2,7 @@ use crate::components::{Action, Coord, Organism};
 use crate::resources::*;
 use crate::systems::*;
 use bevy::prelude::*;
-use rand::Rng;
+use rand::RngExt;
 
 pub fn sim_step_system(
     mut commands: Commands,

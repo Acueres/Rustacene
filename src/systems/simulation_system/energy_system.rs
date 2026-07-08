@@ -15,7 +15,7 @@ pub fn energy_system(total_org_energy: f32, grid: &Grid) -> Vec<Coord<isize>> {
     }
 
     grid.get_cell_coords(CellType::Empty)
-        .choose_multiple(rng, n_pellets)
+        .sample(rng, n_pellets)
         .cloned()
         .collect::<Vec<Coord<isize>>>()
 }

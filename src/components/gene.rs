@@ -1,7 +1,6 @@
 use super::Activation;
 use rand::{
-    distr::{Distribution, StandardUniform},
-    Rng,
+    Rng, RngExt, distr::{Distribution, StandardUniform},
 };
 
 /**<b>Gene structure:</b>

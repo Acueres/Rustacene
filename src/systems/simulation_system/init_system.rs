@@ -1,6 +1,6 @@
 use crate::components::{CellType, Coord, Organism, SensorySystem};
 use crate::resources::{Grid, Parameters, Species};
-use rand::Rng;
+use rand::RngExt;
 
 const INITIAL_ENERGY: f32 = 0.2;
 

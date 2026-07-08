@@ -2,7 +2,7 @@ use crate::components::{Coord, Organism};
 use crate::resources::*;
 use crate::systems::*;
 use bevy::prelude::*;
-use rand::Rng;
+use rand::RngExt;
 
 pub fn epoch_system(
     mut commands: Commands,

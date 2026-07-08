@@ -1,8 +1,7 @@
 use super::Coord;
 use bevy::prelude::Component;
 use rand::{
-    distr::{Distribution, StandardUniform},
-    Rng,
+    Rng, RngExt, distr::{Distribution, StandardUniform},
 };
 use std::ops::Neg;
 

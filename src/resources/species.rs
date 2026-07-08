@@ -1,7 +1,7 @@
 use crate::components::Genome;
 use bevy::prelude::Color;
 use bevy::prelude::Resource;
-use rand::Rng;
+use rand::RngExt;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 #[derive(Resource, Clone)]

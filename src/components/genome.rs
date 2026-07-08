@@ -1,5 +1,5 @@
 use super::Gene;
-use rand::Rng;
+use rand::RngExt;
 
 #[derive(Clone, PartialEq)]
 pub struct Genome {

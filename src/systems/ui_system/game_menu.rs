@@ -40,8 +40,8 @@ fn build_info_panel(commands: &mut Commands, asset_server: &Res<AssetServer>) ->
         .spawn((
             Text::new("Sim Info"),
             TextFont {
-                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                font_size: 20.0,
+                font: asset_server.load("fonts/OpenSans-Regular.ttf").into(),
+                font_size: FontSize::Px(20.0),
                 ..default()
             },
             Label,
@@ -52,8 +52,8 @@ fn build_info_panel(commands: &mut Commands, asset_server: &Res<AssetServer>) ->
         .spawn((
             Text::new(""),
             TextFont {
-                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                font_size: 16.0,
+                font: asset_server.load("fonts/OpenSans-Regular.ttf").into(),
+                font_size: FontSize::Px(16.0),
                 ..default()
             },
             EpochText,
@@ -64,8 +64,8 @@ fn build_info_panel(commands: &mut Commands, asset_server: &Res<AssetServer>) ->
         .spawn((
             Text::new(""),
             TextFont {
-                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                font_size: 16.0,
+                font: asset_server.load("fonts/OpenSans-Regular.ttf").into(),
+                font_size: FontSize::Px(16.0),
                 ..default()
             },
             PopulationText,
@@ -76,8 +76,8 @@ fn build_info_panel(commands: &mut Commands, asset_server: &Res<AssetServer>) ->
         .spawn((
             Text::new(""),
             TextFont {
-                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                font_size: 16.0,
+                font: asset_server.load("fonts/OpenSans-Regular.ttf").into(),
+                font_size: FontSize::Px(16.0),
                 ..default()
             },
             EnergyText,
@@ -100,8 +100,8 @@ fn build_species_panel(commands: &mut Commands, asset_server: &Res<AssetServer>)
         .spawn((
             Text::new(""),
             TextFont {
-                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                font_size: 20.0,
+                font: asset_server.load("fonts/OpenSans-Regular.ttf").into(),
+                font_size: FontSize::Px(20.0),
                 ..default()
             },
             TotalSpeciesText,
@@ -133,8 +133,8 @@ fn spawn_species_label(commands: &mut Commands, asset_server: &Res<AssetServer>)
         .spawn((
             Text::new(""),
             TextFont {
-                font: asset_server.load("fonts/OpenSans-Regular.ttf"),
-                font_size: 14.0,
+                font: asset_server.load("fonts/OpenSans-Regular.ttf").into(),
+                font_size: FontSize::Px(14.0),
                 ..default()
             },
             TextColor(WHITE.into()),
