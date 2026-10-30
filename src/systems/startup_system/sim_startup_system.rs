@@ -1,12 +1,10 @@
 use super::*;
-use bevy::window::PrimaryWindow;
 use bevy::color::palettes::css::MIDNIGHT_BLUE;
+use bevy::window::PrimaryWindow;
 
 pub fn sim_startup_system(
     mut window_query: Query<&mut Window, With<PrimaryWindow>>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     let mut window = window_query.single_mut().unwrap();
     window.resizable = false;
@@ -49,8 +47,6 @@ pub fn sim_startup_system(
     for (org, coord) in orgs.iter().zip(coords.iter()) {
         spawn_organism(
             &mut commands,
-            &mut meshes,
-            &mut materials,
             org,
             coord,
             species.get_color(org.species),
@@ -63,15 +59,8 @@ pub fn sim_startup_system(
     let pellet_coords = energy_system(orgs.iter().map(|org| org.energy).sum::<f32>(), &grid);
     for coord in pellet_coords.iter() {
         grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
-        spawn_pellet(
-            &mut commands,
-            &mut meshes,
-            &mut materials,
-            coord,
-            params.cell_width,
-            params.cell_height,
-        );
+        spawn_pellet(&mut commands, coord, params.cell_width, params.cell_height);
     }
 
-    commands.insert_resource(grid.clone());
+    commands.insert_resource(grid);
 }

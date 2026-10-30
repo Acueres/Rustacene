@@ -23,15 +23,17 @@ impl Grid {
         self.data[[x, y]]
     }
 
+    pub fn count_cells(&self, cell_type: CellType) -> usize {
+        self.data.iter().filter(|&&cell| cell == cell_type).count()
+    }
+
     pub fn get_cell_coords(&self, cell_type: CellType) -> Vec<Coord<isize>> {
         self.data
             .indexed_iter()
-            .filter(|x| x.1.to_owned() == cell_type)
-            .collect::<Vec<((usize, usize), &CellType)>>()
-            .iter()
-            .map(|v| Coord::<isize> {
-                x: v.0 .0 as isize,
-                y: v.0 .1 as isize,
+            .filter(|&(_, cell)| *cell == cell_type)
+            .map(|((x, y), _)| Coord::<isize> {
+                x: x as isize,
+                y: y as isize,
             })
             .collect::<Vec<Coord<isize>>>()
     }

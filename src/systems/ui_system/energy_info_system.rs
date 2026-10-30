@@ -9,9 +9,10 @@ pub fn energy_info_system(
     mut energy_text: Single<&mut Text, With<EnergyText>>,
 ) {
     let total_org_energy = orgs_query.iter().map(|org| org.energy).sum::<f32>();
-    let total_pellet_energy =
-        grid.get_cell_coords(CellType::Consumable).iter().len() as f32 * PELLET_ENERGY;
+    let total_pellet_energy = grid.count_cells(CellType::Consumable) as f32 * PELLET_ENERGY;
     let total_system_energy: f32 = total_org_energy + total_pellet_energy;
 
-    energy_text.0 = ((total_system_energy * 100.).round() / 100.).to_string();
+    energy_text.set_if_neq(Text::new(
+        ((total_system_energy * 100.).round() / 100.).to_string(),
+    ));
 }

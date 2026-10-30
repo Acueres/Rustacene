@@ -9,8 +9,6 @@ pub fn epoch_system(
     time: Res<Time>,
     mut sim_state: ResMut<SimState>,
     params: Res<Parameters>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut epoch_time: ResMut<EpochTime>,
     mut grid: ResMut<Grid>,
     mut species: ResMut<Species>,
@@ -50,14 +48,7 @@ pub fn epoch_system(
         let pellet_coords = energy_system(total_orgs_energy, &grid);
         for coord in pellet_coords.iter() {
             grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
-            spawn_pellet(
-                &mut commands,
-                &mut meshes,
-                &mut materials,
-                coord,
-                params.cell_width,
-                params.cell_height,
-            );
+            spawn_pellet(&mut commands, coord, params.cell_width, params.cell_height);
         }
     }
 }

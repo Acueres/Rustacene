@@ -276,9 +276,10 @@ mod tests {
         let input = vec![0.5, 0.8, 1.]; // last value should not affect the output
         let actual_output = *ns.forward(&input).first().unwrap();
 
-        assert_eq!(
-            (actual_output * 1e9) as usize,
-            (expected_output * 1e9) as usize
+        // f32 activation results can round differently under optimization.
+        assert!(
+            (actual_output - expected_output).abs() < 1e-6,
+            "expected {expected_output}, got {actual_output}",
         );
     }
 
@@ -309,9 +310,10 @@ mod tests {
 
         let actual_output = *ns.forward(&input).first().unwrap();
 
-        assert_eq!(
-            (actual_output * 1e9) as usize,
-            (expected_output * 1e9) as usize
+        // f32 activation results can round differently under optimization.
+        assert!(
+            (actual_output - expected_output).abs() < 1e-6,
+            "expected {expected_output}, got {actual_output}",
         );
     }
 
@@ -340,9 +342,10 @@ mod tests {
         let input = vec![0.];
         let actual_output = *ns.forward(&input).first().unwrap();
 
-        assert_eq!(
-            (actual_output * 1e9) as usize,
-            (expected_output * 1e9) as usize
+        // f32 activation results can round differently under optimization.
+        assert!(
+            (actual_output - expected_output).abs() < 1e-6,
+            "expected {expected_output}, got {actual_output}",
         );
     }
 

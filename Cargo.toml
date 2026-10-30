@@ -14,5 +14,9 @@ num-traits = "0.2.19"
 [profile.release]
 opt-level = 3
 
+[profile.dev]
+# Optimize simulation code as well as dependencies while retaining debug info.
+opt-level = 1
+
 [profile.dev.package."*"]
 opt-level = 3

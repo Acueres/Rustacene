@@ -6,8 +6,6 @@ use rand::RngExt;
 
 pub fn sim_step_system(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     time: Res<Time>,
     sim_state: Res<SimState>,
     params: Res<Parameters>,
@@ -112,7 +110,7 @@ pub fn sim_step_system(
         }
 
         for (child, parent_coord) in children.into_iter() {
-            let nearby_coords = grid.clone().search_area(parent_coord, 1, CellType::Empty);
+            let nearby_coords = grid.search_area(parent_coord, 1, CellType::Empty);
 
             if nearby_coords.len() == 0 {
                 continue;
@@ -128,8 +126,6 @@ pub fn sim_step_system(
 
             spawn_organism(
                 &mut commands,
-                &mut meshes,
-                &mut materials,
                 &child,
                 &child_coord,
                 species.get_color(child.species),

@@ -1,12 +1,10 @@
 use crate::components::*;
 use crate::resources::Parameters;
-use bevy::prelude::*;
 use bevy::color::palettes::css::GREEN;
+use bevy::prelude::*;
 
 pub fn spawn_organism(
     commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
     org: &Organism,
     coord: &Coord<isize>,
     color: Color,
@@ -55,8 +53,11 @@ pub fn spawn_organism(
         ns,
         coord.to_owned(),
         dir,
-        Mesh2d(meshes.add(Rectangle::new(params.cell_width, params.cell_width))),
-        MeshMaterial2d(materials.add(ColorMaterial::from(color))),
+        // Bevy shares sprite geometry and caches materials for identical sprites.
+        Sprite {
+            alpha_mode: bevy::sprite::SpriteAlphaMode::Opaque,
+            ..Sprite::from_color(color, Vec2::splat(params.cell_width))
+        },
         Transform::from_translation(Vec3::new(
             (coord.x as f32) * params.cell_width,
             (coord.y as f32) * params.cell_height,
@@ -67,8 +68,6 @@ pub fn spawn_organism(
 
 pub fn spawn_pellet(
     commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<ColorMaterial>>,
     coord: &Coord<isize>,
     cell_width: f32,
     cell_height: f32,
@@ -76,12 +75,53 @@ pub fn spawn_pellet(
     commands.spawn((
         Pellet,
         coord.to_owned(),
-        Mesh2d(meshes.add(Rectangle::new(cell_width, cell_width))),
-        MeshMaterial2d(materials.add(ColorMaterial::from(Color::Srgba(GREEN)))),
+        Sprite {
+            alpha_mode: bevy::sprite::SpriteAlphaMode::Opaque,
+            ..Sprite::from_color(Color::Srgba(GREEN), Vec2::splat(cell_width))
+        },
         Transform::from_translation(Vec3::new(
             (coord.x as f32) * cell_width,
             (coord.y as f32) * cell_height,
             0.,
         )),
     ));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bevy::asset::AssetApp;
+    use bevy::sprite_render::{SpriteMeshMaterial, SpriteMeshPlugin};
+
+    #[test]
+    fn pellets_share_render_assets_across_spawns() {
+        let mut app = App::new();
+        app.add_plugins((MinimalPlugins, AssetPlugin::default()))
+            .init_asset::<bevy::shader::Shader>()
+            .add_plugins((
+                bevy::mesh::MeshPlugin,
+                bevy::image::TextureAtlasPlugin,
+                SpriteMeshPlugin,
+            ));
+
+        for x in 0..2 {
+            spawn_pellet(&mut app.world_mut().commands(), &Coord::new(x, 0), 2., 3.);
+            app.world_mut().flush();
+            app.update();
+        }
+
+        let world = app.world_mut();
+        let mut query = world.query_filtered::<
+            (&Mesh2d, &MeshMaterial2d<SpriteMeshMaterial>, &Transform),
+            With<Pellet>,
+        >();
+        let cells: Vec<_> = query.iter(world).collect();
+        assert_eq!(cells.len(), 2);
+        assert_eq!(cells[0].0.0.id(), cells[1].0.0.id());
+        assert_eq!(cells[0].1.0.id(), cells[1].1.0.id());
+        assert_eq!(
+            (cells[0].2.translation - cells[1].2.translation).abs(),
+            Vec3::new(2., 0., 0.),
+        );
+    }
 }

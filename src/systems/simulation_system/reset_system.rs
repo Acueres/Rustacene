@@ -7,8 +7,6 @@ pub fn reset_system(
     params: Res<Parameters>,
     mut sim_state: ResMut<SimState>,
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
     mut species: ResMut<Species>,
     orgs_query: Query<(Entity, &Organism)>,
     pellets_query: Query<(Entity, &Pellet)>,
@@ -31,8 +29,6 @@ pub fn reset_system(
         for (org, coord) in orgs.iter().zip(coords.iter()) {
             spawn_organism(
                 &mut commands,
-                &mut meshes,
-                &mut materials,
                 org,
                 coord,
                 species.get_color(org.species),
@@ -40,21 +36,14 @@ pub fn reset_system(
             );
         }
 
-        for (e, _,) in pellets_query.iter() {
+        for (e, _) in pellets_query.iter() {
             commands.entity(e).despawn();
         }
 
         let pellet_coords = energy_system(orgs.iter().map(|org| org.energy).sum::<f32>(), &grid);
         for coord in pellet_coords {
             grid.set(coord.x as usize, coord.y as usize, CellType::Consumable);
-            spawn_pellet(
-                &mut commands,
-                &mut meshes,
-                &mut materials,
-                &coord,
-                params.cell_width,
-                params.cell_height,
-            );
+            spawn_pellet(&mut commands, &coord, params.cell_width, params.cell_height);
         }
 
         commands.insert_resource(grid);
