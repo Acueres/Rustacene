@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "cargo build rustacene",
+            "type": "process",
+            "command": "cargo",
+            "args": ["build", "--bin=rustacene", "--package=rustacene"],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": ["$rustc"]
+        }
+    ]
+}

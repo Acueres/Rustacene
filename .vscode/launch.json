@@ -20,7 +20,25 @@
                 }
             },
             "args": [],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "_NO_DEBUG_HEAP": "1"
+            }
+        },
+        {
+            "type": "cppvsdbg",
+            "request": "launch",
+            "name": "Debug (Windows)",
+            "program": "${workspaceFolder}/target/debug/rustacene.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "cargo build rustacene",
+            "environment": [
+                {
+                    "name": "_NO_DEBUG_HEAP",
+                    "value": "1"
+                }
+            ]
         },
         {
             "type": "lldb",
